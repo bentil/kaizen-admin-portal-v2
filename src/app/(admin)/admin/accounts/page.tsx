@@ -115,7 +115,11 @@ export default function AdminAccountsPage() {
         setIsAddDialogOpen(false);
         resetForm();
       },
-      onError: () => toast.error("Failed to create organization")
+      onError: (error: any) => {
+        const data = error?.response?.data;
+        const detail = typeof data === "string" ? data : data?.message ?? data?.detail;
+        toast.error(typeof detail === "string" && detail ? detail : "Failed to create organization");
+      }
     }
   });
 
@@ -149,6 +153,20 @@ export default function AdminAccountsPage() {
   const countries = Array.isArray(countriesData?.data) ? countriesData.data : [];
 
   const handleAddOrg = () => {
+    const missing = [
+      [formData.name, "Organization name"],
+      [formData.countryId, "Country"],
+      [formData.typeId, "Organization type"],
+      [formData.address, "Physical address"],
+      [formData.adminFirstName, "Administrator first name"],
+      [formData.adminLastName, "Administrator last name"],
+      [formData.adminEmail, "Administrator email"],
+      [formData.adminUsername, "Administrator username"],
+    ].find(([value]) => !value.trim());
+    if (missing) {
+      toast.error(`${missing[1]} is required`);
+      return;
+    }
     addOrgMutation.mutate({ 
       data: { 
         name: formData.name, 
@@ -473,6 +491,22 @@ export default function AdminAccountsPage() {
                       {types.map((t) => (<SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="font-bold text-slate-800">Physical address *</Label>
+                <Input placeholder="Eg: 12 Independence Avenue" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="h-12 rounded-xl border-slate-200" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="font-bold text-slate-800">City</Label>
+                  <Input placeholder="Eg: Accra" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="h-12 rounded-xl border-slate-200" />
+                </div>
+                <div className="space-y-3">
+                  <Label className="font-bold text-slate-800">Region</Label>
+                  <Input placeholder="Eg: Greater Accra" value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} className="h-12 rounded-xl border-slate-200" />
                 </div>
               </div>
 
