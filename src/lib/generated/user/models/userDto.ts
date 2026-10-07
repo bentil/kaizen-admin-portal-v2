@@ -25,6 +25,8 @@ export interface UserDto {
   requirePasswordChange: boolean;
   status: string;
   isOwner: boolean;
+  /** @nullable */
+  referralCode: string | null;
   createdAt: string;
   /** @nullable */
   modifiedAt: string | null;

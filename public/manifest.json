@@ -1,6 +1,6 @@
 {
-  "name": "Kaizen Admins",
-  "short_name": "Req",
+  "name": "Kaizen Admin",
+  "short_name": "Kaizen Admin",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

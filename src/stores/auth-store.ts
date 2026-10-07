@@ -187,6 +187,7 @@ function buildDevUser(roleCode: RoleCode): AuthUser {
         requirePasswordChange: false,
         status: "ACTIVE",
         isOwner: fixture.isOwner,
+        referralCode: null,
         createdAt: timestamp,
         modifiedAt: null,
         lastLoggedInAt: timestamp,

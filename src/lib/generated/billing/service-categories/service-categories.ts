@@ -282,6 +282,95 @@ export function useGetPublicServiceCategories<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Get the ServiceCategory that owns the given ServiceSubcategory
+ */
+export const getServiceCategoryBySubcategoryId = (
+    subcategoryId: number,
+ signal?: AbortSignal
+) => {
+      
+      
+      return billingRequest<ApiSuccessResponseServiceCategory>(
+      {url: `/api/v1/service-categories/by-subcategory/${subcategoryId}`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getGetServiceCategoryBySubcategoryIdQueryKey = (subcategoryId?: number,) => {
+    return [
+    `/api/v1/service-categories/by-subcategory/${subcategoryId}`
+    ] as const;
+    }
+
+    
+export const getGetServiceCategoryBySubcategoryIdQueryOptions = <TData = Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError = ApiErrorResponse>(subcategoryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetServiceCategoryBySubcategoryIdQueryKey(subcategoryId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>> = ({ signal }) => getServiceCategoryBySubcategoryId(subcategoryId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(subcategoryId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetServiceCategoryBySubcategoryIdQueryResult = NonNullable<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>>
+export type GetServiceCategoryBySubcategoryIdQueryError = ApiErrorResponse
+
+
+export function useGetServiceCategoryBySubcategoryId<TData = Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError = ApiErrorResponse>(
+ subcategoryId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>,
+          TError,
+          Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetServiceCategoryBySubcategoryId<TData = Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError = ApiErrorResponse>(
+ subcategoryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>,
+          TError,
+          Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetServiceCategoryBySubcategoryId<TData = Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError = ApiErrorResponse>(
+ subcategoryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetServiceCategoryBySubcategoryId<TData = Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError = ApiErrorResponse>(
+ subcategoryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getServiceCategoryBySubcategoryId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetServiceCategoryBySubcategoryIdQueryOptions(subcategoryId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Get ServiceCategory by ID
  */
 export const getServiceCategory = (

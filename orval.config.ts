@@ -1,30 +1,6 @@
 import { defineConfig } from "orval";
 
 export default defineConfig({
-    requisition: {
-        input: {
-            target: "https://api.sandbox.kaizen-aceit.com/requisition/openapi.json",
-        },
-        output: {
-            mode: "tags-split",
-            target: "src/lib/generated/requisition",
-            schemas: "src/lib/generated/requisition/models",
-            client: "react-query",
-            httpClient: "axios",
-            mock: false,
-            override: {
-                mutator: {
-                    path: "./src/lib/api-client.ts",
-                    name: "requisitionRequest",
-                },
-                query: {
-                    useQuery: true,
-                    useInfinite: false,
-                    useMutation: true,
-                },
-            },
-        },
-    },
     org: {
         input: {
             target: "https://api.sandbox.kaizen-aceit.com/org/docs/swagger.json",

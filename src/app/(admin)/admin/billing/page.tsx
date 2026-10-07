@@ -10,7 +10,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Search, 
   Loader2, 
@@ -20,7 +19,6 @@ import {
   FileText, 
   Trash2, 
   AlertCircle,
-  Banknote,
   Calendar,
   Building2,
   Receipt,
@@ -31,9 +29,8 @@ import { PaginationController } from "@/components/ui/pagination-controller";
 import { useGetOrganizations } from "@/lib/generated/org/organizations/organizations";
 import { 
   useGetInvoices, 
-  useAddInvoice, 
-  useUpdateInvoice, 
-  useInitiatePayment,
+  useAddInvoice,
+  useUpdateInvoice,
   useCancelInvoice,
   getGetInvoicesQueryKey
 } from "@/lib/generated/billing/invoices/invoices";
@@ -130,24 +127,6 @@ export default function AdminBillingPage() {
     }
   });
 
-  const initiatePaymentMutation = useInitiatePayment({
-    mutation: {
-      onSuccess: (response) => {
-        const checkoutUrl = (response as any)?.data?.checkoutUrl;
-        if (checkoutUrl) {
-          window.open(checkoutUrl, "_blank");
-          toast.success("Redirecting to payment gateway...");
-        } else {
-          toast.success("Payment initiated");
-        }
-        queryClient.invalidateQueries({ queryKey: getGetInvoicesQueryKey() });
-      },
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to initiate payment");
-      }
-    }
-  });
-
   const cancelInvoiceMutation = useCancelInvoice({
     mutation: {
       onSuccess: () => {
@@ -213,6 +192,14 @@ export default function AdminBillingPage() {
     }
     if (!invoiceFormData.description) {
       toast.error("Please provide a description");
+      return;
+    }
+    if (!invoiceFormData.clientReference) {
+      toast.error("Please provide a reference");
+      return;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(invoiceFormData.clientReference)) {
+      toast.error("Reference must contain only alphanumeric characters");
       return;
     }
     createInvoiceMutation.mutate({ data: invoiceFormData });
@@ -348,13 +335,7 @@ export default function AdminBillingPage() {
                               <DropdownMenuItem onClick={() => { setEditingInvoice(inv); setEditDescription(inv.description || ""); setIsEditInvoiceOpen(true); }}>
                                 <Pencil className="mr-2 h-4 w-4" /> Edit Description
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-violet-600 focus:text-violet-700 font-bold"
-                                onClick={() => initiatePaymentMutation.mutate({ data: { reference: inv.referenceCode || "" } })}
-                              >
-                                <Banknote className="mr-2 h-4 w-4" /> Pay Now
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-red-600 focus:text-red-700"
                                 onClick={() => { setCancellingInvoice(inv); setIsCancelInvoiceOpen(true); }}
                               >
@@ -410,13 +391,7 @@ export default function AdminBillingPage() {
                       </div>
                     </div>
                     {inv.status === "PENDING" && (
-                      <div className="flex items-center gap-2 pt-2">
-                        <Button 
-                          className="flex-1 bg-violet-600 hover:bg-violet-700 h-9 rounded-xl text-xs font-bold"
-                          onClick={() => initiatePaymentMutation.mutate({ data: { reference: inv.referenceCode || "" } })}
-                        >
-                          Pay Now
-                        </Button>
+                      <div className="flex items-center justify-end pt-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-slate-200">
@@ -427,7 +402,7 @@ export default function AdminBillingPage() {
                             <DropdownMenuItem onClick={() => { setEditingInvoice(inv); setEditDescription(inv.description || ""); setIsEditInvoiceOpen(true); }}>
                               <Pencil className="mr-2 h-4 w-4" /> Edit Description
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-red-600 focus:text-red-700"
                               onClick={() => { setCancellingInvoice(inv); setIsCancelInvoiceOpen(true); }}
                             >
@@ -467,7 +442,7 @@ export default function AdminBillingPage() {
             </DialogHeader>
           </div>
           
-          <ScrollArea className="flex-1 px-10 py-8">
+          <div className="flex-1 overflow-y-auto px-10 py-8 min-h-0">
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -517,11 +492,11 @@ export default function AdminBillingPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold text-slate-800">Reference (optional)</Label>
-                  <Input 
-                    placeholder="e.g. PO-789" 
-                    value={invoiceFormData.clientReference || ""} 
-                    onChange={(e) => setInvoiceFormData({ ...invoiceFormData, clientReference: e.target.value })}
+                  <Label className="font-bold text-slate-800">Reference</Label>
+                  <Input
+                    placeholder="e.g. PO789"
+                    value={invoiceFormData.clientReference || ""}
+                    onChange={(e) => setInvoiceFormData({ ...invoiceFormData, clientReference: e.target.value.replace(/[^a-zA-Z0-9]/g, "") })}
                     className="h-12 rounded-xl border-slate-200"
                   />
                 </div>
@@ -599,7 +574,7 @@ export default function AdminBillingPage() {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="p-10 pt-6 flex items-center justify-end gap-3 bg-white border-t border-slate-50">
             <Button variant="ghost" onClick={() => setIsCreateInvoiceOpen(false)} className="h-12 rounded-2xl px-8 font-bold bg-slate-50 text-slate-600">Cancel</Button>

@@ -34,7 +34,7 @@ const packageTemplateSchema = z.object({
   currencyId: z.string().min(1, "Currency is required"),
   offersRequired: z.string().optional(),
   validity: z.string().optional(),
-  validityTimeUnit: z.enum(["DAYS", "MONTHS", "YEARS"]).optional(),
+  validityTimeUnit: z.enum(["DAY", "MONTH"]).optional(),
   discountId: z.string().optional(),
 });
 
@@ -284,9 +284,8 @@ export default function PackageTemplatesPage() {
                           <Select value={field.value || ""} onValueChange={field.onChange}>
                             <SelectTrigger className="h-12 rounded-xl border-slate-200"><SelectValue placeholder="Select unit" /></SelectTrigger>
                             <SelectContent className="rounded-xl shadow-xl">
-                              <SelectItem value="DAYS">Days</SelectItem>
-                              <SelectItem value="MONTHS">Months</SelectItem>
-                              <SelectItem value="YEARS">Years</SelectItem>
+                              <SelectItem value="DAY">Day</SelectItem>
+                              <SelectItem value="MONTH">Month</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -450,9 +449,8 @@ export default function PackageTemplatesPage() {
                       <Select value={field.value || ""} onValueChange={field.onChange}>
                         <SelectTrigger className="h-12 rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                         <SelectContent className="rounded-xl shadow-xl">
-                          <SelectItem value="DAYS">Days</SelectItem>
-                          <SelectItem value="MONTHS">Months</SelectItem>
-                          <SelectItem value="YEARS">Years</SelectItem>
+                          <SelectItem value="DAY">Day</SelectItem>
+                          <SelectItem value="MONTH">Month</SelectItem>
                         </SelectContent>
                       </Select>
                     )}

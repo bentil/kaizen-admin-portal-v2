@@ -24,6 +24,7 @@ import {
   getSearchDiscountsQueryKey,
 } from "@/lib/generated/billing/discounts/discounts";
 import { useGetOrganizations } from "@/lib/generated/org/organizations/organizations";
+import { useGetOrganizationTypes } from "@/lib/generated/org/organization-types/organization-types";
 import type { Discount, UpdateDiscountDto } from "@/lib/generated/billing/models";
 import { queryClient } from "@/lib/react-query-provider";
 import { Tag, Search, Loader2, Plus, Pencil, Trash2, Calendar as CalendarIcon, Sparkles } from "lucide-react";
@@ -38,13 +39,13 @@ import * as z from "zod";
 const discountSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   code: z.string().min(2, "Code must be at least 2 characters").regex(/^[a-zA-Z0-9]+$/, "Code must only contain alphanumeric characters"),
-  description: z.string().optional(),
+  description: z.string().min(1, "Description is required"),
   discountType: z.enum(["percentage", "fixed"]),
   value: z.string().min(1, "Value is required"),
   startDate: z.date().optional().nullable(),
   endDate: z.date().optional().nullable(),
   active: z.boolean().default(true),
-  organizationId: z.string().min(1, "Organization is required"),
+  organizationId: z.string().optional(),
 });
 
 type DiscountFormValues = z.infer<typeof discountSchema>;
@@ -84,7 +85,7 @@ export default function AdminDiscountsPage() {
       startDate: new Date(),
       endDate: addDays(new Date(), 1),
       active: true,
-      organizationId: "1", // Default to Platform Org
+      organizationId: "",
     },
   });
 
@@ -104,7 +105,16 @@ export default function AdminDiscountsPage() {
   const discounts = Array.isArray(activeQuery.data?.data) ? (activeQuery.data.data as Discount[]) : [];
   const pagination = activeQuery.data?.pagination;
 
-  const { data: orgsData } = useGetOrganizations({ limit: 100 });
+  const { data: orgTypesData } = useGetOrganizationTypes();
+  const contentProviderTypeId = React.useMemo(() => {
+    const types = Array.isArray(orgTypesData?.data) ? orgTypesData.data : [];
+    return types.find((t) => t.code === "CONTENT_PROVIDER")?.id;
+  }, [orgTypesData]);
+
+  const { data: orgsData } = useGetOrganizations(
+    { limit: 100, typeId: contentProviderTypeId },
+    { query: { enabled: contentProviderTypeId != null } },
+  );
   const orgs = Array.isArray(orgsData?.data) ? orgsData.data : [];
 
   const createMutation = useAddDiscount({
@@ -173,7 +183,7 @@ export default function AdminDiscountsPage() {
       const updateData: UpdateDiscountDto = {
         name: data.name,
         code: data.code,
-        description: data.description || "",
+        description: data.description,
         active: data.active,
         percentage: formattedPercentage,
         fixedValue: formattedFixedValue,
@@ -185,13 +195,13 @@ export default function AdminDiscountsPage() {
       const createData: any = {
         name: data.name,
         code: data.code,
-        description: data.description || "",
+        description: data.description,
         active: data.active,
         percentage: formattedPercentage,
         fixedValue: formattedFixedValue,
         startDate: formatDate(data.startDate),
         endDate: formatDate(data.endDate),
-        organizationId: Number(data.organizationId),
+        organizationId: data.organizationId ? Number(data.organizationId) : null,
       };
       
       createMutation.mutate({ data: createData as any });
@@ -205,11 +215,11 @@ export default function AdminDiscountsPage() {
       code: discount.code,
       description: discount.description || "",
       discountType: discount.percentage ? "percentage" : "fixed",
-      value: discount.percentage ? String(Math.round(Number(discount.percentage) * 100)) : String(discount.fixedValue ?? ""),
+      value: discount.percentage ? formatPercentage(discount.percentage) : String(discount.fixedValue ?? ""),
       startDate: discount.startDate ? new Date(discount.startDate) : null,
       endDate: discount.endDate ? new Date(discount.endDate) : null,
       active: discount.active ?? true,
-      organizationId: discount.organizationId ? String(discount.organizationId) : "1",
+      organizationId: discount.organizationId ? String(discount.organizationId) : "",
     });
   };
 
@@ -226,6 +236,13 @@ export default function AdminDiscountsPage() {
     if (discount.endDate && new Date(discount.endDate) < now) return false;
     return true;
   };
+
+  // Percentages are stored as fractions (0.125 = 12.5%). Rounding here would both
+  // misreport the value and, via openEdit seeding the form from this same
+  // conversion, silently rewrite it on the next save — so keep the fraction and
+  // only trim floating-point noise.
+  const formatPercentage = (percentage: string | number) =>
+    String(Number((Number(percentage) * 100).toFixed(4)));
 
   const formatFixedValue = (value: string | number, discountName?: string) => {
     const numValue = typeof value === "string" ? parseFloat(value) : value;
@@ -354,6 +371,16 @@ export default function AdminDiscountsPage() {
                       )}
                     />
                     {errors.organizationId && <p className="text-sm text-red-500 font-medium">{errors.organizationId.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-800">Description</Label>
+                    <textarea
+                      {...register("description")}
+                      placeholder="Describe when and how this discount applies"
+                      className="flex min-h-[80px] w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    {errors.description && <p className="text-sm text-red-500 font-medium">{errors.description.message}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -503,7 +530,7 @@ export default function AdminDiscountsPage() {
                       </TableCell>
                       <TableCell><code className="text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded tracking-wider uppercase">{discount.code}</code></TableCell>
                       <TableCell className="font-bold text-slate-900">
-                        {discount.percentage ? `${discount.percentage}% OFF` : formatFixedValue(discount.fixedValue || 0, discount.name)}
+                        {discount.percentage ? `${formatPercentage(discount.percentage)}% OFF` : formatFixedValue(discount.fixedValue || 0, discount.name)}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600 font-medium">
                         {discount.endDate ? (
@@ -552,7 +579,7 @@ export default function AdminDiscountsPage() {
                     
                     <div className="flex items-baseline gap-1 pt-2">
                       <span className="text-4xl font-black text-slate-900 tracking-tight">
-                        {discount.percentage ? `${discount.percentage}%` : formatFixedValue(discount.fixedValue || 0, discount.name)}
+                        {discount.percentage ? `${formatPercentage(discount.percentage)}%` : formatFixedValue(discount.fixedValue || 0, discount.name)}
                       </span>
                       <span className="text-slate-400 font-bold ml-1 text-sm uppercase tracking-widest">{discount.percentage ? "OFF" : "Discount"}</span>
                     </div>
@@ -657,22 +684,28 @@ export default function AdminDiscountsPage() {
                 </div>
               </div>
 
+              {/* UpdateDiscountDto carries no organizationId, so the target org can
+                  only be set at creation — show it read-only instead of offering a
+                  control whose changes are silently dropped on save. */}
               <div className="space-y-2">
                 <Label className="font-bold text-slate-800">Target Organization</Label>
-                <Controller
-                  name="organizationId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="h-12 rounded-xl border-slate-200 shadow-sm"><SelectValue placeholder="Select organization" /></SelectTrigger>
-                      <SelectContent className="rounded-xl shadow-xl">
-                        {orgs.map((org) => (
-                          <SelectItem key={org.id} value={String(org.id)} className="rounded-lg">{org.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                <div className="flex h-12 items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600">
+                  {editingDiscount?.organizationId
+                    ? orgs.find((org) => String(org.id) === String(editingDiscount.organizationId))?.name
+                      ?? `Organization #${editingDiscount.organizationId}`
+                    : "All organizations"}
+                </div>
+                <p className="text-xs text-slate-400">Set at creation and cannot be changed.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-bold text-slate-800">Description</Label>
+                <textarea
+                  {...register("description")}
+                  placeholder="Describe when and how this discount applies"
+                  className="flex min-h-[80px] w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
+                {errors.description && <p className="text-sm text-red-500 font-medium">{errors.description.message}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

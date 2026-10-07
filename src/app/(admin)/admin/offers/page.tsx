@@ -14,18 +14,18 @@ import {
   useUpdateOffer,
   useDeleteOffer,
   getGetOffersQueryKey,
+  getGetOfferQueryKey,
   getSearchOffersQueryKey,
 } from "@/lib/generated/billing/offers/offers";
 import { useGetServicePackages } from "@/lib/generated/billing/packages/packages";
 import { useGetProductCategories } from "@/lib/generated/billing/product-categories/product-categories";
-import { useGetServiceCategories } from "@/lib/generated/billing/service-categories/service-categories";
+import { useGetServiceCategories, useGetServiceCategoryBySubcategoryId } from "@/lib/generated/billing/service-categories/service-categories";
 import { useGetServiceSubcategories } from "@/lib/generated/billing/service-subcategories/service-subcategories";
 import type { OfferDto, CreateOfferDto, UpdateOfferDto } from "@/lib/generated/billing/models";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Tags, 
   Search, 
@@ -98,7 +98,6 @@ export default function AdminOffersPage() {
     control,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<OfferFormValues>({
     resolver: zodResolver(offerSchema),
@@ -117,14 +116,18 @@ export default function AdminOffersPage() {
 
   const { availableCurrencies } = useCurrency();
 
-  const watchedCategoryId = watch("productCategoryId");
+  const offerSubcategoryId = detailedOfferResp?.data?.serviceSubcategoryId;
+  const { data: serviceCatBySubResp } = useGetServiceCategoryBySubcategoryId(
+    Number(offerSubcategoryId || 0),
+    { query: { enabled: !!editingOffer?.id && !!offerSubcategoryId } },
+  );
+  const resolvedServiceCategoryId = serviceCatBySubResp?.data?.id;
 
   React.useEffect(() => {
-    const catId = parseInt(watchedCategoryId);
-    if (!isNaN(catId)) {
-      setSelectedCategoryId(catId);
+    if (editingOffer?.id && resolvedServiceCategoryId != null) {
+      setSelectedCategoryId(resolvedServiceCategoryId);
     }
-  }, [watchedCategoryId]);
+  }, [editingOffer?.id, resolvedServiceCategoryId]);
 
   const calculateUnitPrice = () => {
     const total = parseFloat(desiredTotalPrice);
@@ -145,14 +148,13 @@ export default function AdminOffersPage() {
         code: offer.code || "",
         description: offer.description || "",
         unitPrice: String(offer.unitPrice || ""),
-        currencyId: String(offer.currencyId || "1"),
+        currencyId: offer.currencyId ? String(offer.currencyId) : "",
         maximumCheckIns: String(offer.maximumCheckIns || "-1"),
         serviceSubcategoryId: String(offer.serviceSubcategoryId || ""),
         productCategoryId: String(offer.productCategoryId || ""),
         packageIds: pkgIds,
       });
       setOriginalPackageIds(pkgIds);
-      setSelectedCategoryId(offer.productCategoryId);
     }
   }, [detailedOfferResp?.data, editingOffer?.id, reset]);
 
@@ -206,8 +208,17 @@ export default function AdminOffersPage() {
 
   const updateMutation = useUpdateOffer({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (response, variables) => {
         toast.success("Offer updated successfully");
+        // Only prime the per-offer cache when the PATCH response actually carries
+        // the packages relation — seeding without it would make the edit dialog
+        // reopen with every linked package unchecked (see the reset effect above),
+        // which turns a re-check into a duplicate link and hides real unlinks.
+        if (response?.data?.packages) {
+          queryClient.setQueryData(getGetOfferQueryKey(variables.id), response);
+        } else {
+          queryClient.invalidateQueries({ queryKey: getGetOfferQueryKey(variables.id) });
+        }
         queryClient.invalidateQueries({ queryKey: getGetOffersQueryKey() });
         queryClient.invalidateQueries({ queryKey: getSearchOffersQueryKey() });
         setEditingOffer(null);
@@ -236,7 +247,6 @@ export default function AdminOffersPage() {
 
   const onSubmit = (data: OfferFormValues) => {
     const selectedCurrency = availableCurrencies.find(c => c.code === data.currencyId || String(c.id) === data.currencyId);
-    const currencyCode = selectedCurrency?.code || "GHS";
     const currencyId = selectedCurrency?.id || Number(data.currencyId) || 1;
 
     if (editingOffer) {
@@ -263,10 +273,9 @@ export default function AdminOffersPage() {
         description: data.description,
         unitPrice: data.unitPrice,
         currencyId: currencyId,
-        currencyCode: currencyCode,
         serviceSubcategoryId: Number(data.serviceSubcategoryId),
         productCategoryId: Number(data.productCategoryId),
-        maximumCheckIns: Number(data.maximumCheckIns),
+        maximumCheckIns: 1,
         packageIds: data.packageIds.length > 0 ? data.packageIds : undefined,
       };
       createMutation.mutate({ data: createData });
@@ -285,6 +294,16 @@ export default function AdminOffersPage() {
 
   const onSubmitWrapper = (data: any) => onSubmit(data as OfferFormValues);
 
+  const getOfferCurrencyLabel = (offer: OfferDto): string => {
+    if (offer.currency?.symbol) return offer.currency.symbol;
+    if (offer.currencyId != null) {
+      const match = availableCurrencies.find((c) => c.id === offer.currencyId);
+      if (match?.symbol) return match.symbol;
+      if (match?.code) return match.code;
+    }
+    return offer.currency?.code ?? "";
+  };
+
   const ProductCategorySelect = ({ control, errors }: { control: any; errors: any; }) => (
     <div className="space-y-2">
       <Label className="font-bold text-slate-700">Product Category</Label>
@@ -292,7 +311,7 @@ export default function AdminOffersPage() {
         name="productCategoryId"
         control={control}
         render={({ field }) => (
-          <Select value={field.value} onValueChange={(v) => { field.onChange(v); if (!editingOffer) setValue("serviceSubcategoryId", ""); }}>
+          <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
             <SelectContent className="rounded-xl shadow-xl">
               {productCategories.map((cat: any) => (
@@ -306,6 +325,27 @@ export default function AdminOffersPage() {
     </div>
   );
 
+  const ServiceCategorySelect = () => (
+    <div className="space-y-2">
+      <Label className="font-bold text-slate-700">Service Category</Label>
+      <Select
+        value={selectedCategoryId ? String(selectedCategoryId) : ""}
+        onValueChange={(v) => {
+          const id = parseInt(v);
+          setSelectedCategoryId(isNaN(id) ? undefined : id);
+          setValue("serviceSubcategoryId", "");
+        }}
+      >
+        <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select service category" /></SelectTrigger>
+        <SelectContent className="rounded-xl shadow-xl">
+          {serviceCategories.map((cat: any) => (
+            <SelectItem key={cat.id} value={String(cat.id)}>{cat.name} ({cat.code})</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   const ServiceSubcategorySelect = ({ control, errors }: { control: any; errors: any; }) => (
     <div className="space-y-2">
       <Label className="font-bold text-slate-700">Service Subcategory</Label>
@@ -313,11 +353,11 @@ export default function AdminOffersPage() {
         name="serviceSubcategoryId"
         control={control}
         render={({ field }) => (
-          <Select value={field.value} onValueChange={field.onChange} disabled={!watchedCategoryId}>
-            <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder={watchedCategoryId ? "Select subcategory" : "Select category first"} /></SelectTrigger>
+          <Select value={field.value} onValueChange={field.onChange} disabled={!selectedCategoryId}>
+            <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder={selectedCategoryId ? "Select subcategory" : "Pick service category first"} /></SelectTrigger>
             <SelectContent className="rounded-xl shadow-xl">
               {serviceSubcategories.map((sub: any) => (
-                <SelectItem key={sub.id} value={String(sub.id)}>{sub.name} ({sub.code})</SelectItem>
+                <SelectItem key={sub.id} value={String(sub.id)}>{sub.code}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -342,7 +382,13 @@ export default function AdminOffersPage() {
           <ViewToggle view={viewMode} onViewChange={setViewMode} />
           <Dialog open={isCreateOpen} onOpenChange={(open) => {
             setIsCreateOpen(open);
-            if (open) reset();
+            if (open) {
+              reset();
+              // selectedCategoryId is shared with the edit dialog; clear it so a
+              // cancelled edit doesn't leave its category preselected here while
+              // serviceSubcategoryId is blank.
+              setSelectedCategoryId(undefined);
+            }
           }}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-xl shadow-violet-500/25 h-12 px-8 rounded-2xl font-black text-base transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
@@ -350,7 +396,7 @@ export default function AdminOffersPage() {
                 Create Offer
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl rounded-[2rem] p-0 border-none shadow-2xl overflow-hidden bg-white">
+            <DialogContent className="sm:max-w-xl rounded-[2rem] p-0 gap-0 border-none shadow-2xl overflow-hidden bg-white">
               <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="p-10 pb-0">
                   <DialogHeader>
@@ -363,7 +409,7 @@ export default function AdminOffersPage() {
                   </DialogHeader>
                 </div>
                 
-                <div className="p-10 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div className="p-10 pb-4 space-y-6 max-h-[60vh] overflow-y-auto">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="font-bold text-slate-800">Offer Name</Label>
@@ -404,8 +450,9 @@ export default function AdminOffersPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <ProductCategorySelect control={control} errors={errors} />
+                    <ServiceCategorySelect />
                     <ServiceSubcategorySelect control={control} errors={errors} />
                   </div>
 
@@ -419,49 +466,41 @@ export default function AdminOffersPage() {
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="font-bold text-slate-800">Link to Packages</Label>
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <ScrollArea className="h-[120px]">
-                        <div className="space-y-3">
-                          <Controller
-                            name="packageIds"
-                            control={control}
-                            render={({ field }) => (
-                              <>
-                                {availablePackages.map((pkg) => (
-                                  <div key={pkg.id} className="flex items-center space-x-3">
-                                    <Checkbox
-                                      id={`pkg-${pkg.id}`}
-                                      checked={field.value.includes(pkg.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, pkg.id])
-                                          : field.onChange(field.value.filter((val) => val !== pkg.id));
-                                      }}
-                                    />
-                                    <Label htmlFor={`pkg-${pkg.id}`} className="flex-1 cursor-pointer font-medium text-sm text-slate-700">
-                                      {pkg.name} <span className="text-slate-400 font-normal">({pkg.code})</span>
-                                    </Label>
-                                  </div>
-                                ))}
-                              </>
-                            )}
-                          />
+                  {availablePackages.length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="font-bold text-slate-800">Link to Packages</Label>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="max-h-[120px] overflow-y-auto">
+                          <div className="space-y-3">
+                            <Controller
+                              name="packageIds"
+                              control={control}
+                              render={({ field }) => (
+                                <>
+                                  {availablePackages.map((pkg) => (
+                                    <div key={pkg.id} className="flex items-center space-x-3">
+                                      <Checkbox
+                                        id={`pkg-${pkg.id}`}
+                                        checked={field.value.includes(pkg.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, pkg.id])
+                                            : field.onChange(field.value.filter((val) => val !== pkg.id));
+                                        }}
+                                      />
+                                      <Label htmlFor={`pkg-${pkg.id}`} className="flex-1 cursor-pointer font-medium text-sm text-slate-700">
+                                        {pkg.name} <span className="text-slate-400 font-normal">({pkg.code})</span>
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </>
+                              )}
+                            />
+                          </div>
                         </div>
-                      </ScrollArea>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="bg-violet-50/50 p-6 rounded-[2rem] flex items-center justify-between border border-violet-100">
-                    <div>
-                      <p className="font-bold text-slate-900">Enable package</p>
-                      <p className="text-xs text-slate-500 font-medium">This makes the offer available on the platform</p>
-                    </div>
-                    <div className="h-6 w-11 rounded-full bg-slate-200 relative cursor-pointer">
-                      <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm" />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <DialogFooter className="p-10 pt-0 flex items-center justify-end gap-3">
@@ -529,7 +568,7 @@ export default function AdminOffersPage() {
                       </TableCell>
                       <TableCell><code className="text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded tracking-wider uppercase">{offer.code}</code></TableCell>
                       <TableCell className="font-bold text-slate-900">
-                        {symbol === "$" && offer.name.includes("(GHS)") ? "GHS" : symbol}
+                        {getOfferCurrencyLabel(offer)}
                         {parseFloat(String(offer.unitPrice || "0")).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
@@ -571,7 +610,7 @@ export default function AdminOffersPage() {
                       <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Unit Price</p>
                         <p className="text-lg font-black text-slate-900">
-                          {symbol === "$" && offer.name.includes("(GHS)") ? "GHS" : symbol}
+                          {getOfferCurrencyLabel(offer)}
                           {parseFloat(String(offer.unitPrice || "0")).toLocaleString()}
                         </p>
                       </div>
@@ -612,8 +651,8 @@ export default function AdminOffersPage() {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingOffer} onOpenChange={(open) => { if (!open) setEditingOffer(null); }}>
-        <DialogContent className="sm:max-w-xl rounded-[2rem] p-0 border-none shadow-2xl overflow-hidden bg-white">
+      <Dialog open={!!editingOffer} onOpenChange={(open) => { if (!open) { setEditingOffer(null); setSelectedCategoryId(undefined); } }}>
+        <DialogContent className="sm:max-w-xl rounded-[2rem] p-0 gap-0 border-none shadow-2xl overflow-hidden bg-white">
           {isLoadingDetails ? (
             <div className="p-20 flex flex-col items-center justify-center space-y-4">
               <DialogTitle className="sr-only">Loading Offer Details</DialogTitle>
@@ -633,7 +672,7 @@ export default function AdminOffersPage() {
                 </DialogHeader>
               </div>
 
-              <div className="p-10 space-y-6 max-h-[60vh] overflow-y-auto">
+              <div className="p-10 pb-4 space-y-6 max-h-[60vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="font-bold text-slate-800">Offer Name</Label>
@@ -662,9 +701,11 @@ export default function AdminOffersPage() {
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger className="h-12 rounded-xl border-slate-200"><SelectValue placeholder="Select" /></SelectTrigger>
                           <SelectContent className="rounded-xl shadow-xl">
-                            {availableCurrencies.map((c) => (
-                              <SelectItem key={c.code} value={String(c.id || c.code)}>{c.code} ({c.symbol})</SelectItem>
-                            ))}
+                            {availableCurrencies
+                              .filter((c) => c.id != null)
+                              .map((c) => (
+                                <SelectItem key={c.id} value={String(c.id)}>{c.code} ({c.symbol})</SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       )}
@@ -679,8 +720,9 @@ export default function AdminOffersPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <ProductCategorySelect control={control} errors={errors} />
+                  <ServiceCategorySelect />
                   <ServiceSubcategorySelect control={control} errors={errors} />
                 </div>
 
@@ -692,39 +734,41 @@ export default function AdminOffersPage() {
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="font-bold text-slate-800">Linked Packages</Label>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <ScrollArea className="h-[120px]">
-                      <div className="space-y-3">
-                        <Controller
-                          name="packageIds"
-                          control={control}
-                          render={({ field }) => (
-                            <>
-                              {availablePackages.map((pkg) => (
-                                <div key={pkg.id} className="flex items-center space-x-3">
-                                  <Checkbox
-                                    id={`edit-pkg-${pkg.id}`}
-                                    checked={field.value.includes(pkg.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, pkg.id])
-                                        : field.onChange(field.value.filter((val) => val !== pkg.id));
-                                    }}
-                                  />
-                                  <Label htmlFor={`edit-pkg-${pkg.id}`} className="flex-1 cursor-pointer font-medium text-sm text-slate-700">
-                                    {pkg.name} <span className="text-slate-400 font-normal">({pkg.code})</span>
-                                  </Label>
-                                </div>
-                              ))}
-                            </>
-                          )}
-                        />
+                {availablePackages.length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="font-bold text-slate-800">Linked Packages</Label>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="max-h-[120px] overflow-y-auto">
+                        <div className="space-y-3">
+                          <Controller
+                            name="packageIds"
+                            control={control}
+                            render={({ field }) => (
+                              <>
+                                {availablePackages.map((pkg) => (
+                                  <div key={pkg.id} className="flex items-center space-x-3">
+                                    <Checkbox
+                                      id={`edit-pkg-${pkg.id}`}
+                                      checked={field.value.includes(pkg.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, pkg.id])
+                                          : field.onChange(field.value.filter((val) => val !== pkg.id));
+                                      }}
+                                    />
+                                    <Label htmlFor={`edit-pkg-${pkg.id}`} className="flex-1 cursor-pointer font-medium text-sm text-slate-700">
+                                      {pkg.name} <span className="text-slate-400 font-normal">({pkg.code})</span>
+                                    </Label>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                          />
+                        </div>
                       </div>
-                    </ScrollArea>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <DialogFooter className="p-10 pt-0 flex items-center justify-end gap-3">

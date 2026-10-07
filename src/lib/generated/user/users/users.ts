@@ -31,6 +31,7 @@ import type {
   ApiSuccessResponseAccountCheckResponse,
   ApiSuccessResponseCountNumber,
   ApiSuccessResponseDateCountDataArray,
+  ApiSuccessResponseReferralInviteResponseDto,
   ApiSuccessResponseUserDto,
   ApiSuccessResponseUserDtoArray,
   ChangePasswordDto,
@@ -40,6 +41,7 @@ import type {
   GetUsersParams,
   GroupCountByDateParams,
   ReactivateUserDto,
+  ReferralInviteDto,
   SearchUsersParams,
   SubscriberUserSignupDto,
   UpdateSelfDto,
@@ -110,6 +112,69 @@ const {mutation: mutationOptions} = options ?
       > => {
 
       const mutationOptions = getSubscriberUserSignupMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Invite users by email using a referral code. Each email gets a pending
+Individual Subscriber account; the confirmation email CTA carries the
+referral code so it can be persisted on confirmation.
+ */
+export const referralInvite = (
+    referralInviteDto: ReferralInviteDto,
+ signal?: AbortSignal
+) => {
+      
+      
+      return userRequest<ApiSuccessResponseReferralInviteResponseDto>(
+      {url: `/api/v1/users/referral-invites`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: referralInviteDto, signal
+    },
+      );
+    }
+  
+
+
+export const getReferralInviteMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof referralInvite>>, TError,{data: ReferralInviteDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof referralInvite>>, TError,{data: ReferralInviteDto}, TContext> => {
+
+const mutationKey = ['referralInvite'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof referralInvite>>, {data: ReferralInviteDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  referralInvite(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReferralInviteMutationResult = NonNullable<Awaited<ReturnType<typeof referralInvite>>>
+    export type ReferralInviteMutationBody = ReferralInviteDto
+    export type ReferralInviteMutationError = unknown
+
+    export const useReferralInvite = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof referralInvite>>, TError,{data: ReferralInviteDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof referralInvite>>,
+        TError,
+        {data: ReferralInviteDto},
+        TContext
+      > => {
+
+      const mutationOptions = getReferralInviteMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

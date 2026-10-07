@@ -213,7 +213,7 @@ export default function AdminLayout({ children }: AdminShellProps) {
       defaultOpen: true,
       items: [
         {
-          label: "Content Providers",
+          label: "Organizations",
           icon: Building2,
           href: "/admin/accounts",
           isActive: pathname?.startsWith("/admin/accounts"),

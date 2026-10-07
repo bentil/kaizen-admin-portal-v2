@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   useGetOrganizations, 
@@ -53,7 +52,7 @@ import { queryClient } from "@/lib/react-query-provider";
 import { toast } from "sonner";
 import type { OrganizationDto } from "@/lib/generated/org/models/organizationDto";
 import type { OrganizationStatus } from "@/lib/generated/org/models/organizationStatus";
-import type { UpdateOrganizationDto, UpdateOrganizationDtoStatus, UpdateOrganizationDtoSpaceType } from "@/lib/generated/org/models";
+import type { UpdateOrganizationDto, UpdateOrganizationDtoStatus, UpdateOrganizationDtoSpaceType, GenericOrganizationConfigDto } from "@/lib/generated/org/models";
 import { 
   useGetSubAccounts, 
   useEnableSubAccount, 
@@ -61,6 +60,25 @@ import {
   SubAccount
 } from "@/lib/api/content-api";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+// FAMILY_SUBSCRIBER and CORPORATE_SUBSCRIBER are temporarily hidden; the
+// downstream code (e.g. handleAddOrg's confirmationUrl switch) still
+// handles them so they can be re-enabled by re-adding them here.
+const SELECTABLE_ORG_TYPE_CODES = ["CONTENT_PROVIDER"];
+
+const DEFAULT_CONTENT_PROVIDER_MAX_USERS = 25;
+
+// NEXT_PUBLIC_ vars are inlined at build time, so this has to be a literal lookup.
+// Only a whole number is accepted: a positive seat count, or -1 for unlimited
+// (the convention used by SubscriptionPlan.maxUsers). Anything else — "0",
+// "1e3", "twenty" — falls back to the default rather than silently shipping a
+// bad seat cap that the edit dialog has no way to correct.
+const contentProviderMaxUsers = (() => {
+  const raw = process.env.NEXT_PUBLIC_CONTENT_PROVIDER_MAX_USERS?.trim();
+  if (!raw || !/^-?\d+$/.test(raw)) return DEFAULT_CONTENT_PROVIDER_MAX_USERS;
+  const parsed = Number.parseInt(raw, 10);
+  return parsed > 0 || parsed === -1 ? parsed : DEFAULT_CONTENT_PROVIDER_MAX_USERS;
+})();
 
 export default function AdminAccountsPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -153,40 +171,78 @@ export default function AdminAccountsPage() {
   const countries = Array.isArray(countriesData?.data) ? countriesData.data : [];
 
   const handleAddOrg = () => {
-    const missing = [
-      [formData.name, "Organization name"],
-      [formData.countryId, "Country"],
-      [formData.typeId, "Organization type"],
-      [formData.address, "Physical address"],
-      [formData.adminFirstName, "Administrator first name"],
-      [formData.adminLastName, "Administrator last name"],
-      [formData.adminEmail, "Administrator email"],
-      [formData.adminUsername, "Administrator username"],
-    ].find(([value]) => !value.trim());
-    if (missing) {
-      toast.error(`${missing[1]} is required`);
+    const selectedType = types.find((t) => String(t.id) === formData.typeId);
+    const selectedCountry = countries.find((c) => String(c.id) === formData.countryId);
+
+    // The org type drives both confirmationUrl and config below, so a missing or
+    // unresolved type must block the request rather than silently fall through
+    // to a default type with the wrong confirmation link and no config.
+    const missingField = !formData.name.trim()
+      ? "Organization name"
+      : !formData.address.trim()
+        ? "Physical address"
+        : !selectedCountry
+          ? "Country"
+          : !selectedType
+            ? "Organization type"
+            : !formData.adminFirstName.trim()
+              ? "Admin first name"
+              : !formData.adminLastName.trim()
+                ? "Admin last name"
+                : !formData.adminEmail.trim()
+                  ? "Admin official email"
+                  : !formData.adminUsername.trim()
+                    ? "Admin username"
+                    : null;
+
+    if (missingField || !selectedType || !selectedCountry) {
+      toast.error(`${missingField ?? "A required field"} is required`);
       return;
     }
-    addOrgMutation.mutate({ 
-      data: { 
-        name: formData.name, 
+
+    let confirmationUrl: string;
+    let config: GenericOrganizationConfigDto | undefined;
+    switch (selectedType?.code) {
+      case "CONTENT_PROVIDER":
+        confirmationUrl =
+          process.env.NEXT_PUBLIC_CONTENT_PROVIDER_CONFIRMATION_URL ??
+          "https://content.sandbox.kaizen-aceit.com/confirm-account";
+        config = {
+          maxUsers: contentProviderMaxUsers,
+          enableMonthlyStatementAlerts: true,
+        };
+        break;
+      case "FAMILY_SUBSCRIBER":
+        confirmationUrl =
+          process.env.NEXT_PUBLIC_FAMILY_SUBSCRIBER_CONFIRMATION_URL ??
+          "https://app.sandbox.kaizen-aceit.com/confirm";
+        break;
+      default:
+        confirmationUrl = `${window.location.origin}/otp-confirmation`;
+    }
+
+    addOrgMutation.mutate({
+      data: {
+        name: formData.name,
         code: formData.code || undefined,
-        domain: formData.domain || undefined, 
-        address: formData.address, 
-        city: formData.city || undefined, 
+        domain: formData.domain || undefined,
+        address: formData.address,
+        city: formData.city || undefined,
         region: formData.region || undefined,
-        countryId: parseInt(formData.countryId), 
-        typeId: parseInt(formData.typeId) || 1,
+        countryId: Number(selectedCountry.id),
+        typeId: Number(selectedType.id),
         projectId: formData.projectId ? parseInt(formData.projectId) : undefined,
         groupId: formData.groupId ? parseInt(formData.groupId) : undefined,
+        contactEmail: formData.adminEmail,
         adminProfile: {
           firstName: formData.adminFirstName,
           lastName: formData.adminLastName,
           emailAddress: formData.adminEmail,
           username: formData.adminUsername,
         },
-        confirmationUrl: `${window.location.origin}/confirm`,
-      } 
+        confirmationUrl,
+        ...(config ? { config } : {}),
+      }
     });
   };
 
@@ -299,7 +355,7 @@ export default function AdminAccountsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Content Providers</h1>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Organizations</h1>
           <p className="text-slate-500 text-lg">Manage platform organizations and their associated sub-accounts</p>
         </div>
         <div className="flex items-center gap-3">
@@ -309,7 +365,7 @@ export default function AdminAccountsPage() {
             onClick={() => { resetForm(); setIsAddDialogOpen(true); }}
           >
             <Plus className="mr-2 h-5 w-5" />
-            Add Content Provider
+            Add Organization
           </Button>
         </div>
       </div>
@@ -448,7 +504,7 @@ export default function AdminAccountsPage() {
       )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-[2rem] border-none shadow-2xl bg-white">
+        <DialogContent className="sm:max-w-[750px] p-0 rounded-[2rem] border-none shadow-2xl bg-white">
           <div className="p-10 pb-0">
             <DialogHeader>
               <DialogTitle className="text-3xl font-black text-slate-900">
@@ -460,7 +516,7 @@ export default function AdminAccountsPage() {
             </DialogHeader>
           </div>
           
-          <ScrollArea className="flex-1 p-10">
+          <div className="p-10 max-h-[60vh] overflow-y-auto">
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -488,7 +544,9 @@ export default function AdminAccountsPage() {
                   <Select value={formData.typeId} onValueChange={(v) => setFormData({ ...formData, typeId: v })}>
                     <SelectTrigger className="h-12 rounded-xl border-slate-200"><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
-                      {types.map((t) => (<SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>))}
+                      {types
+                        .filter((t) => SELECTABLE_ORG_TYPE_CODES.includes(t.code))
+                        .map((t) => (<SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -530,7 +588,7 @@ export default function AdminAccountsPage() {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="p-10 pt-4 flex items-center justify-end gap-3">
             <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-12 rounded-2xl px-8 font-bold bg-slate-50 text-slate-600">Cancel</Button>
@@ -559,7 +617,7 @@ export default function AdminAccountsPage() {
             </DialogHeader>
           </div>
 
-          <ScrollArea className="flex-1 p-10">
+          <div className="p-10 max-h-[60vh] overflow-y-auto">
             <Tabs defaultValue="general" className="space-y-8">
               <TabsList className="bg-slate-50 p-1.5 rounded-2xl w-full max-w-md mx-auto grid grid-cols-2 border border-slate-100">
                 <TabsTrigger value="general" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-slate-500 data-[state=active]:text-slate-900 py-2.5">General Info</TabsTrigger>
@@ -626,7 +684,7 @@ export default function AdminAccountsPage() {
                 </div>
               </TabsContent>
             </Tabs>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="p-10 pt-4 flex items-center justify-end gap-3">
             <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="h-12 rounded-2xl px-8 font-bold bg-slate-50 text-slate-600">Discard changes</Button>
