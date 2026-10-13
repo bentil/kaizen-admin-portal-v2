@@ -504,8 +504,8 @@ export default function AdminAccountsPage() {
       )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[750px] p-0 rounded-[2rem] border-none shadow-2xl bg-white">
-          <div className="p-10 pb-0">
+        <DialogContent className="sm:max-w-[750px] max-h-[90vh] rounded-[2rem] p-0 border-none shadow-2xl overflow-hidden bg-white flex flex-col">
+          <div className="p-8 md:p-10 pb-4 shrink-0 border-b border-slate-100">
             <DialogHeader>
               <DialogTitle className="text-3xl font-black text-slate-900">
                 Onboard organization
@@ -516,7 +516,7 @@ export default function AdminAccountsPage() {
             </DialogHeader>
           </div>
           
-          <div className="p-10 max-h-[60vh] overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-8 md:p-10 py-6 min-h-0">
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -590,7 +590,7 @@ export default function AdminAccountsPage() {
             </div>
           </div>
 
-          <DialogFooter className="p-10 pt-4 flex items-center justify-end gap-3">
+          <DialogFooter className="p-8 md:p-10 pt-4 pb-8 shrink-0 border-t border-slate-100 flex items-center justify-end gap-3 bg-white">
             <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)} className="h-12 rounded-2xl px-8 font-bold bg-slate-50 text-slate-600">Cancel</Button>
             <Button 
               className="bg-[#8B5CF6] hover:bg-[#7C3AED] h-12 rounded-2xl px-10 font-black text-white shadow-lg shadow-violet-500/20" 
@@ -606,7 +606,7 @@ export default function AdminAccountsPage() {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-[2rem] border-none shadow-2xl bg-white">
-          <div className="p-10 pb-0">
+          <div className="p-8 md:p-10 pb-4 shrink-0 border-b border-slate-100">
             <DialogHeader>
               <DialogTitle className="text-3xl font-black text-slate-900">
                 Account configuration
@@ -617,7 +617,7 @@ export default function AdminAccountsPage() {
             </DialogHeader>
           </div>
 
-          <div className="p-10 max-h-[60vh] overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-8 md:p-10 py-6 min-h-0">
             <Tabs defaultValue="general" className="space-y-8">
               <TabsList className="bg-slate-50 p-1.5 rounded-2xl w-full max-w-md mx-auto grid grid-cols-2 border border-slate-100">
                 <TabsTrigger value="general" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-slate-500 data-[state=active]:text-slate-900 py-2.5">General Info</TabsTrigger>
@@ -686,7 +686,7 @@ export default function AdminAccountsPage() {
             </Tabs>
           </div>
 
-          <DialogFooter className="p-10 pt-4 flex items-center justify-end gap-3">
+          <DialogFooter className="p-8 md:p-10 pt-4 pb-8 shrink-0 border-t border-slate-100 flex items-center justify-end gap-3 bg-white">
             <Button variant="ghost" onClick={() => setIsEditDialogOpen(false)} className="h-12 rounded-2xl px-8 font-bold bg-slate-50 text-slate-600">Discard changes</Button>
             <Button 
               className="bg-[#8B5CF6] hover:bg-[#7C3AED] h-12 rounded-2xl px-10 font-black text-white shadow-lg shadow-violet-500/20" 
