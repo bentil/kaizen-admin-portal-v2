@@ -28,7 +28,7 @@ const LoadingCard = () => (
 );
 
 export default function AdminDashboardPage() {
-  const { data: usersData, isLoading: usersLoading } = useGetUsers({ limit: 5 });
+  const { data: usersData, isLoading: usersLoading } = useGetUsers({ limit: 5, excludeDeleted: true });
   const { data: usersCountData } = useGetCountReport({});
   const { data: orgsData, isLoading: orgsLoading } = useGetOrganizations({ limit: 5 });
   const { data: rolesData, isLoading: rolesLoading } = useGetOrganizationRoles({ limit: 1 });

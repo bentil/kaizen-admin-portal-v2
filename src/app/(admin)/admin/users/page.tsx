@@ -98,7 +98,14 @@ export default function AdminUsersPage() {
     }
   };
 
-  const { data: usersData, isLoading, refetch } = useGetUsers({ limit: PAGE_SIZE, page: currentPage, status: statusFilter || undefined });
+  const usersParams = React.useMemo(() => {
+    if (statusFilter) {
+      return { limit: PAGE_SIZE, page: currentPage, status: statusFilter };
+    }
+    return { limit: PAGE_SIZE, page: currentPage, excludeDeleted: true };
+  }, [currentPage, statusFilter]);
+
+  const { data: usersData, isLoading, refetch } = useGetUsers(usersParams);
   const { data: statusesData } = useGetUserStatuses({});
   const { data: orgTypesData } = useGetOrganizationTypes();
   const platformAdminTypeId = React.useMemo(() => {
