@@ -62,7 +62,6 @@ import {
   Home,
   LayoutGrid,
   UserPlus,
-  ClipboardList,
 } from "lucide-react";
 
 type NavItem = {
@@ -199,12 +198,6 @@ export default function AdminLayout({ children }: AdminShellProps) {
           icon: Users,
           href: "/admin/users",
           isActive: pathname?.startsWith("/admin/users") || pathname?.startsWith("/admin/roles"),
-        },
-        {
-          label: "Reports",
-          icon: ClipboardList,
-          href: "/admin/reports",
-          isActive: pathname?.startsWith("/admin/reports"),
         },
       ],
     },
