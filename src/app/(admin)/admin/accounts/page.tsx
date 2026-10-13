@@ -233,7 +233,8 @@ export default function AdminAccountsPage() {
         typeId: Number(selectedType.id),
         projectId: formData.projectId ? parseInt(formData.projectId) : undefined,
         groupId: formData.groupId ? parseInt(formData.groupId) : undefined,
-        contactEmail: formData.adminEmail,
+        contactEmail: formData.contactEmail?.trim() || formData.adminEmail?.trim() || "",
+        contactMsisdn: formData.contactMsisdn?.trim() || undefined,
         adminProfile: {
           firstName: formData.adminFirstName,
           lastName: formData.adminLastName,
@@ -526,6 +527,17 @@ export default function AdminAccountsPage() {
                 <div className="space-y-3">
                   <Label className="font-bold text-slate-800">Official domain</Label>
                   <Input placeholder="acme.com" value={formData.domain} onChange={(e) => setFormData({ ...formData, domain: e.target.value })} className="h-12 rounded-xl border-slate-200" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="font-bold text-slate-800">Contact email</Label>
+                  <Input type="email" placeholder="info@acme.com (optional)" value={formData.contactEmail} onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })} className="h-12 rounded-xl border-slate-200" />
+                </div>
+                <div className="space-y-3">
+                  <Label className="font-bold text-slate-800">Contact phone</Label>
+                  <Input placeholder="+233..." value={formData.contactMsisdn} onChange={(e) => setFormData({ ...formData, contactMsisdn: e.target.value })} className="h-12 rounded-xl border-slate-200" />
                 </div>
               </div>
 
