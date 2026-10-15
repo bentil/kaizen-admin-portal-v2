@@ -25,7 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  HealthCheck200
+  HealthCheck200,
+  ServeUserTemplateParams
 } from '.././models';
 
 import { userRequest } from '../../../api-client';
@@ -178,4 +179,93 @@ const {mutation: mutationOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * Serves user upload template files
+ */
+export const serveUserTemplate = (
+    params: ServeUserTemplateParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return userRequest<unknown>(
+      {url: `/templates/uploads/users`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getServeUserTemplateQueryKey = (params?: ServeUserTemplateParams,) => {
+    return [
+    `/templates/uploads/users`, ...(params ? [params]: [])
+    ] as const;
+    }
+
     
+export const getServeUserTemplateQueryOptions = <TData = Awaited<ReturnType<typeof serveUserTemplate>>, TError = unknown>(params: ServeUserTemplateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getServeUserTemplateQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof serveUserTemplate>>> = ({ signal }) => serveUserTemplate(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ServeUserTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof serveUserTemplate>>>
+export type ServeUserTemplateQueryError = unknown
+
+
+export function useServeUserTemplate<TData = Awaited<ReturnType<typeof serveUserTemplate>>, TError = unknown>(
+ params: ServeUserTemplateParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof serveUserTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof serveUserTemplate>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useServeUserTemplate<TData = Awaited<ReturnType<typeof serveUserTemplate>>, TError = unknown>(
+ params: ServeUserTemplateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof serveUserTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof serveUserTemplate>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useServeUserTemplate<TData = Awaited<ReturnType<typeof serveUserTemplate>>, TError = unknown>(
+ params: ServeUserTemplateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useServeUserTemplate<TData = Awaited<ReturnType<typeof serveUserTemplate>>, TError = unknown>(
+ params: ServeUserTemplateParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof serveUserTemplate>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getServeUserTemplateQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+

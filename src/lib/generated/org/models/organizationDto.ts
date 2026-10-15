@@ -18,6 +18,8 @@ export interface OrganizationDto {
   modifiedAt: string | null;
   createdAt: string;
   /** @nullable */
+  referralCode: string | null;
+  /** @nullable */
   statusLastModifiedAt: string | null;
   /** @nullable */
   statusReason: string | null;

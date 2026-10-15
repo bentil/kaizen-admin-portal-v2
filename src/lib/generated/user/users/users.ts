@@ -32,6 +32,7 @@ import type {
   ApiSuccessResponseCountNumber,
   ApiSuccessResponseDateCountDataArray,
   ApiSuccessResponseReferralInviteResponseDto,
+  ApiSuccessResponseUploadUsersResponse,
   ApiSuccessResponseUserDto,
   ApiSuccessResponseUserDtoArray,
   ChangePasswordDto,
@@ -40,13 +41,15 @@ import type {
   GetCountReportParams,
   GetUsersParams,
   GroupCountByDateParams,
+  NonScopedSearchUsersParams,
   ReactivateUserDto,
   ReferralInviteDto,
   SearchUsersParams,
   SubscriberUserSignupDto,
   UpdateSelfDto,
   UpdateUserDto,
-  UpdateUsernameDto
+  UpdateUsernameDto,
+  UploadUsersBody
 } from '.././models';
 
 import { userRequest } from '../../../api-client';
@@ -392,6 +395,71 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
 
 
 /**
+ * Upload new users
+ */
+export const uploadUsers = (
+    organizationId: number,
+    uploadUsersBody: UploadUsersBody,
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
+formData.append(`confirmationUrl`, uploadUsersBody.confirmationUrl)
+formData.append(`file`, uploadUsersBody.file)
+
+      return userRequest<ApiSuccessResponseUploadUsersResponse>(
+      {url: `/api/v1/users/uploads/organizations/${organizationId}`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+  
+
+
+export const getUploadUsersMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadUsers>>, TError,{organizationId: number;data: UploadUsersBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof uploadUsers>>, TError,{organizationId: number;data: UploadUsersBody}, TContext> => {
+
+const mutationKey = ['uploadUsers'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadUsers>>, {organizationId: number;data: UploadUsersBody}> = (props) => {
+          const {organizationId,data} = props ?? {};
+
+          return  uploadUsers(organizationId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadUsersMutationResult = NonNullable<Awaited<ReturnType<typeof uploadUsers>>>
+    export type UploadUsersMutationBody = UploadUsersBody
+    export type UploadUsersMutationError = unknown
+
+    export const useUploadUsers = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadUsers>>, TError,{organizationId: number;data: UploadUsersBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadUsers>>,
+        TError,
+        {organizationId: number;data: UploadUsersBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUploadUsersMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Add a new confirmed user (account is immediately active)
  */
 export const addConfirmedUser = (
@@ -621,6 +689,96 @@ export function useSearchUsers<TData = Awaited<ReturnType<typeof searchUsers>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getSearchUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Search for Users without scoping
+ */
+export const nonScopedSearchUsers = (
+    params: NonScopedSearchUsersParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return userRequest<ApiSuccessResponseUserDtoArray>(
+      {url: `/api/v1/users/search/community`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+
+
+export const getNonScopedSearchUsersQueryKey = (params?: NonScopedSearchUsersParams,) => {
+    return [
+    `/api/v1/users/search/community`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getNonScopedSearchUsersQueryOptions = <TData = Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError = unknown>(params: NonScopedSearchUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getNonScopedSearchUsersQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof nonScopedSearchUsers>>> = ({ signal }) => nonScopedSearchUsers(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type NonScopedSearchUsersQueryResult = NonNullable<Awaited<ReturnType<typeof nonScopedSearchUsers>>>
+export type NonScopedSearchUsersQueryError = unknown
+
+
+export function useNonScopedSearchUsers<TData = Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError = unknown>(
+ params: NonScopedSearchUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nonScopedSearchUsers>>,
+          TError,
+          Awaited<ReturnType<typeof nonScopedSearchUsers>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNonScopedSearchUsers<TData = Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError = unknown>(
+ params: NonScopedSearchUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nonScopedSearchUsers>>,
+          TError,
+          Awaited<ReturnType<typeof nonScopedSearchUsers>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNonScopedSearchUsers<TData = Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError = unknown>(
+ params: NonScopedSearchUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useNonScopedSearchUsers<TData = Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError = unknown>(
+ params: NonScopedSearchUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nonScopedSearchUsers>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getNonScopedSearchUsersQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

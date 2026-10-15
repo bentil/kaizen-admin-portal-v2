@@ -3,7 +3,7 @@ import { USER_AUTH, waitForListReady } from "../helpers";
 
 test.use({ storageState: USER_AUTH });
 
-async function goToFirstKaizen AdminDiscussion(
+async function goToFirstRequisitionDiscussion(
   page: import("@playwright/test").Page,
 ) {
   await page.goto("/requisitions");
@@ -21,7 +21,7 @@ async function goToFirstKaizen AdminDiscussion(
  * one that actually has threads. Falls back to the first requisition if
  * none has threads (test will then skip via the inner logic).
  */
-async function goToKaizen AdminWithDiscussions(
+async function goToRequisitionWithDiscussions(
   page: import("@playwright/test").Page,
   maxScan = 5,
 ) {
@@ -63,7 +63,7 @@ test.describe("Discussion page — critical", () => {
   test("DISC-01 — load discussions list and auto-select first thread", async ({
     page,
   }, testInfo) => {
-    await goToFirstKaizen AdminDiscussion(page);
+    await goToFirstRequisitionDiscussion(page);
     // On mobile the "Discussion" title is hidden (hidden sm:flex); rely on
     // the Threads button (mobile) or the Threads h2 heading (desktop)
     // to anchor the assertion.
@@ -90,7 +90,7 @@ test.describe("Discussion page — critical", () => {
         threadedRequests.push(r.url());
       }
     });
-    await goToKaizen AdminWithDiscussions(page);
+    await goToRequisitionWithDiscussions(page);
     await page.waitForLoadState("networkidle").catch(() => {});
     await page.waitForTimeout(1_000);
     test.skip(
@@ -103,7 +103,7 @@ test.describe("Discussion page — critical", () => {
   test("DISC-13 — create new thread dialog opens (if permission)", async ({
     page,
   }, testInfo) => {
-    await goToFirstKaizen AdminDiscussion(page);
+    await goToFirstRequisitionDiscussion(page);
     // Wait for <Can permission="discussions:write"> to resolve once the
     // Zustand auth store hydrates.
     await page.waitForLoadState("networkidle").catch(() => {});
@@ -134,7 +134,7 @@ test.describe("Discussion page — critical", () => {
   test("DISC-33 — composer is present when a thread is selected (read-write roles)", async ({
     page,
   }) => {
-    await goToFirstKaizen AdminDiscussion(page);
+    await goToFirstRequisitionDiscussion(page);
     await page.waitForLoadState("networkidle").catch(() => {});
     // Give the auto-selected thread a tick to render its composer.
     await page.waitForTimeout(500);
@@ -154,7 +154,7 @@ test.describe("Discussion page — critical", () => {
       testInfo.project.name !== "chromium-mobile",
       "mobile-viewport only",
     );
-    await goToFirstKaizen AdminDiscussion(page);
+    await goToFirstRequisitionDiscussion(page);
     await expect(
       page.getByRole("button", { name: /threads/i }),
     ).toBeVisible({ timeout: 15_000 });

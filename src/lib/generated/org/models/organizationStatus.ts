@@ -18,4 +18,5 @@ export const OrganizationStatus = {
   ACTIVE: 'ACTIVE',
   SUSPENDED: 'SUSPENDED',
   DISABLED: 'DISABLED',
+  DELETED: 'DELETED',
 } as const;

@@ -17,7 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -44,24 +43,21 @@ import {
 import {
   Bell,
   Search,
-  LayoutDashboard,
   Users,
   Building2,
-  CreditCard,
   Tag,
   Shield,
   Layers,
   Settings,
   LogOut,
   ChevronRight,
-  ChevronsUpDown,
   User,
   Percent,
   Wallet,
   FileText,
   Home,
   LayoutGrid,
-  UserPlus,
+  Package,
 } from "lucide-react";
 
 type NavItem = {
@@ -137,12 +133,23 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
   );
 };
 
+interface ExtendedUser {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  emailAddress?: string;
+  username?: string;
+  imageUrl?: string;
+}
+
 export default function AdminLayout({ children }: AdminShellProps) {
   const { user, logout, isAuthenticated } = useAuth();
   const { data: selfData } = useGetSelf({
     query: { enabled: isAuthenticated },
   });
   const currentUser = selfData?.data || user;
+  const userProfile = currentUser as ExtendedUser | undefined;
   const avatarUrl = selfData?.data?.imageUrl ?? user?.imageUrl;
   const pathname = usePathname();
   const router = useRouter();
@@ -178,26 +185,45 @@ export default function AdminLayout({ children }: AdminShellProps) {
         {
           label: "Products / Services",
           icon: Layers,
-          href: "/admin/offers",
-          isActive: pathname?.startsWith("/admin/offers") || pathname?.startsWith("/admin/discounts") || pathname?.startsWith("/admin/package-templates") || pathname?.startsWith("/admin/product-categories"),
+          href: "/admin/products",
+          isActive: pathname?.startsWith("/admin/products") || pathname?.startsWith("/admin/product-categories") || pathname?.startsWith("/admin/offers") || pathname?.startsWith("/admin/discounts") || pathname?.startsWith("/admin/package-templates"),
           children: [
+            { label: "Products", icon: Package, href: "/admin/products" },
+            { label: "Product Categories", icon: FileText, href: "/admin/product-categories" },
             { label: "Offers", icon: Tag, href: "/admin/offers" },
             { label: "Discounts", icon: Percent, href: "/admin/discounts" },
             { label: "Package Templates", icon: Layers, href: "/admin/package-templates" },
-            { label: "Product Categories", icon: FileText, href: "/admin/product-categories" },
           ]
         },
         {
           label: "Subscription & Billing",
           icon: FileText,
           href: "/admin/billing",
-          isActive: pathname?.startsWith("/admin/billing") || pathname?.startsWith("/admin/payment-config"),
+          isActive: pathname?.startsWith("/admin/billing"),
+        },
+        {
+          label: "Payment Configuration",
+          icon: Wallet,
+          href: "/admin/payment-config",
+          isActive: pathname?.startsWith("/admin/payment-config"),
         },
         {
           label: "Users",
           icon: Users,
           href: "/admin/users",
-          isActive: pathname?.startsWith("/admin/users") || pathname?.startsWith("/admin/roles"),
+          isActive: pathname === "/admin/users" || (pathname?.startsWith("/admin/users/") && !pathname?.startsWith("/admin/roles")),
+        },
+        {
+          label: "Roles & Permissions",
+          icon: Shield,
+          href: "/admin/roles",
+          isActive: pathname?.startsWith("/admin/roles"),
+        },
+        {
+          label: "Notifications & Announcements",
+          icon: Bell,
+          href: "/admin/notifications",
+          isActive: pathname?.startsWith("/admin/notifications"),
         },
       ],
     },
@@ -222,8 +248,6 @@ export default function AdminLayout({ children }: AdminShellProps) {
   ];
 
 
-
-  const initials = user?.name?.split(' ').map(n => n[0]).join('') || user?.email?.[0]?.toUpperCase() || '?';
 
   if (!mounted) {
     return null;
@@ -300,9 +324,9 @@ export default function AdminLayout({ children }: AdminShellProps) {
                 <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl hover:bg-slate-50 transition-all group">
                   <ProfilePicture
                     src={avatarUrl}
-                    firstName={(currentUser as any)?.name?.split(' ')[0] || currentUser?.firstName}
-                    lastName={(currentUser as any)?.name?.split(' ')[1] || currentUser?.lastName}
-                    email={(currentUser as any)?.email || currentUser?.emailAddress}
+                    firstName={userProfile?.name?.split(' ')[0] || userProfile?.firstName}
+                    lastName={userProfile?.name?.split(' ')[1] || userProfile?.lastName}
+                    email={userProfile?.email || userProfile?.emailAddress}
                     size="default"
                     className="rounded-xl shadow-sm group-hover:shadow-md transition-shadow"
                   />
@@ -315,15 +339,15 @@ export default function AdminLayout({ children }: AdminShellProps) {
                 <div className="flex items-center gap-3 p-3 mb-2 bg-slate-50 rounded-xl">
                   <ProfilePicture
                     src={avatarUrl}
-                    firstName={(currentUser as any)?.name?.split(' ')[0] || currentUser?.firstName}
-                    lastName={(currentUser as any)?.name?.split(' ')[1] || currentUser?.lastName}
-                    email={(currentUser as any)?.email || currentUser?.emailAddress}
+                    firstName={userProfile?.name?.split(' ')[0] || userProfile?.firstName}
+                    lastName={userProfile?.name?.split(' ')[1] || userProfile?.lastName}
+                    email={userProfile?.email || userProfile?.emailAddress}
                     size="default"
                     className="rounded-lg"
                   />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-bold text-slate-900 truncate">{(currentUser as any)?.name || currentUser?.username || "Admin"}</span>
-                    <span className="text-xs text-slate-500 truncate">{(currentUser as any)?.email || currentUser?.emailAddress || "admin@example.com"}</span>
+                    <span className="text-sm font-bold text-slate-900 truncate">{userProfile?.name || userProfile?.username || "Admin"}</span>
+                    <span className="text-xs text-slate-500 truncate">{userProfile?.email || userProfile?.emailAddress || "admin@example.com"}</span>
                   </div>
                 </div>
                 <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-violet-50 focus:text-violet-600">

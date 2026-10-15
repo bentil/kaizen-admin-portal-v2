@@ -12,11 +12,11 @@
  */
 export function extractErrorMessage(err: unknown, fallback: string): string {
     const data = (err as { response?: { data?: unknown } })?.response?.data as
-        | { detail?: unknown; message?: string }
+        | { detail?: unknown; details?: unknown; message?: string }
         | undefined;
 
     if (data && typeof data === "object") {
-        const detail = data.detail;
+        const detail = data.detail ?? data.details;
         if (typeof detail === "string") return detail;
         if (Array.isArray(detail)) {
             // FastAPI 422: array of { type, loc: string[], msg, input }

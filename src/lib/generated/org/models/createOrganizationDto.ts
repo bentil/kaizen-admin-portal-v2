@@ -40,4 +40,6 @@ export interface CreateOrganizationDto {
   config?: GenericOrganizationConfigDto;
   adminProfile: AdminProfile;
   confirmationUrl: string;
+  /** @nullable */
+  referralCode?: string | null;
 }

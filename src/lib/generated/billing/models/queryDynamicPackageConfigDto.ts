@@ -9,7 +9,10 @@ import type { DynamicPackageConfigOrderBy } from './dynamicPackageConfigOrderBy'
 
 export interface QueryDynamicPackageConfigDto {
   currencyId?: number;
+  currencyCode?: string;
   discountId?: number;
+  usableOnly?: boolean;
+  serviceSubcategoryId?: number;
   page?: number;
   limit?: number;
   orderBy?: DynamicPackageConfigOrderBy;

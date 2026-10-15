@@ -16,4 +16,5 @@ export interface CountUserDto {
   isOwner?: boolean;
   'createdAt.gte'?: string;
   'createdAt.lte'?: string;
+  excludeDeleted?: boolean;
 }

@@ -16,4 +16,5 @@ status?: string;
 isOwner?: boolean;
 'createdAt.gte'?: string;
 'createdAt.lte'?: string;
+excludeDeleted?: boolean;
 };

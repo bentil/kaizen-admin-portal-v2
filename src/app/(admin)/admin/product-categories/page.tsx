@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,7 +18,7 @@ import { useGetServiceCategories } from "@/lib/generated/billing/service-categor
 import { useGetServiceSubcategories } from "@/lib/generated/billing/service-subcategories/service-subcategories";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { FileText, Search, Loader2, Plus, Pencil, Trash2, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, Package, MoreHorizontal, Check, CornerUpLeft, Star } from "lucide-react";
+import { FileText, Search, Loader2, Plus, Pencil, Trash2, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, Package, MoreHorizontal, Check, CornerUpLeft, Star, BookOpen } from "lucide-react";
 import { PaginationController } from "@/components/ui/pagination-controller";
 import {
   DropdownMenu,
@@ -33,10 +33,14 @@ import { extractErrorMessage } from "@/lib/api-error";
 import {
   useGetProductsByCategory,
   useApproveProduct,
-  useReferProduct,
   useSetDefaultProduct,
   type ProductReviewStatus,
+  type Product,
 } from "@/lib/api/content-api";
+import { ProductFormDialog } from "@/components/products/product-form-dialog";
+import { ProductDeleteDialog } from "@/components/products/product-delete-dialog";
+import { ProductReferDialog } from "@/components/products/product-refer-dialog";
+import { ProductCoursesDialog } from "@/components/products/product-courses-dialog";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,6 +112,12 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
   const [subcategoryFilter, setSubcategoryFilter] = React.useState<string>("all");
   const [reviewFilter, setReviewFilter] = React.useState<string>("all");
 
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = React.useState<Product | null>(null);
+  const [referringProduct, setReferringProduct] = React.useState<Product | null>(null);
+  const [viewingCoursesProduct, setViewingCoursesProduct] = React.useState<Product | null>(null);
+
   React.useEffect(() => {
     setPage(1);
   }, [serviceCategoryFilter, subcategoryFilter, reviewFilter]);
@@ -142,11 +152,10 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
   );
 
   const approveProduct = useApproveProduct();
-  const referProduct = useReferProduct();
   const setDefaultProduct = useSetDefaultProduct();
 
   const actingId =
-    [approveProduct, referProduct, setDefaultProduct].find((m) => m.isPending)?.variables ?? null;
+    [approveProduct, setDefaultProduct].find((m) => m.isPending)?.variables ?? null;
 
   return (
     <TableRow className="bg-slate-50/40 hover:bg-slate-50/40">
@@ -225,15 +234,21 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
                 Clear filters
               </Button>
             )}
-            {serviceCategoryFilter !== "all" && subcategoryFilter === "all" && (
-              // The products endpoint only filters by serviceSubcategoryId, so the
-              // service category alone narrows nothing — say so instead of leaving
-              // an unfiltered list looking filtered.
-              <span className="text-xs font-medium text-amber-600">
-                Pick a subcategory to filter — service category alone shows all products.
-              </span>
-            )}
+
+            <Button
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+              className="ml-auto h-9 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl text-xs font-bold shadow-sm"
+            >
+              <Plus className="mr-1.5 h-3.5 w-3.5 stroke-[3px]" />
+              Add Product
+            </Button>
           </div>
+          {serviceCategoryFilter !== "all" && subcategoryFilter === "all" && (
+            <div className="mb-3 text-xs font-medium text-amber-600">
+              Pick a subcategory to filter — service category alone shows all products.
+            </div>
+          )}
           {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500 text-sm py-4">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading products...
@@ -246,8 +261,20 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
               </Button>
             </div>
           ) : products.length === 0 ? (
-            <div className="flex items-center gap-2 text-sm text-slate-400 py-4">
-              <Package className="h-4 w-4" /> No products in this category
+            <div className="flex items-center justify-between py-6 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-sm text-slate-500">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-slate-400" />
+                <span>No products in this category yet.</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsCreateOpen(true)}
+                className="h-8 rounded-lg text-xs font-bold"
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Create First Product
+              </Button>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -257,86 +284,121 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
                     <TableHead className="text-xs font-bold">Product</TableHead>
                     <TableHead className="text-xs font-bold">Code</TableHead>
                     <TableHead className="text-xs font-bold">Subcategory</TableHead>
+                    <TableHead className="text-xs font-bold text-center">Courses</TableHead>
                     <TableHead className="text-xs font-bold">Review</TableHead>
                     <TableHead className="text-xs font-bold text-right">Pass criteria</TableHead>
                     <TableHead className="text-xs font-bold text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((p) => (
-                    <TableRow key={p.id} className="hover:bg-slate-50/50">
-                      <TableCell className="text-sm font-semibold text-slate-900">
-                        {p.name}
-                        {p.isDefault && (
-                          <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 text-[0.625rem] font-bold text-violet-600">
-                            DEFAULT
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <code className="rounded bg-slate-100 px-2 py-1 font-mono text-xs uppercase text-slate-600">
-                          {p.code}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        {p.serviceSubcategory?.code ? (
+                  {products.map((p) => {
+                    const count = p.courseCount ?? p.courses?.length ?? 0;
+                    return (
+                      <TableRow key={p.id} className="hover:bg-slate-50/50">
+                        <TableCell className="text-sm font-semibold text-slate-900">
+                          {p.name}
+                          {p.isDefault && (
+                            <span className="ml-2 rounded bg-violet-50 px-1.5 py-0.5 text-[0.625rem] font-bold text-violet-600">
+                              DEFAULT
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <code className="rounded bg-slate-100 px-2 py-1 font-mono text-xs uppercase text-slate-600">
-                            {p.serviceSubcategory.code}
+                            {p.code}
                           </code>
-                        ) : (
-                          <span className="text-xs text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`rounded-full px-2 py-0.5 text-[0.625rem] font-bold ${PRODUCT_REVIEW_STYLES[p.reviewStatus] ?? "bg-slate-100 text-slate-600"}`}>
-                          {p.reviewStatus}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right text-sm text-slate-500">{p.passCriteria}%</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={actingId === p.id}
-                            >
-                              {actingId === p.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <MoreHorizontal className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem
-                              disabled={p.reviewStatus === "APPROVED"}
-                              onClick={() => approveProduct.mutate(p.id)}
-                            >
-                              <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                              Approve product
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={p.reviewStatus === "DRAFT" || p.reviewStatus === "REFERRED"}
-                              onClick={() => referProduct.mutate(p.id)}
-                            >
-                              <CornerUpLeft className="mr-2 h-4 w-4 text-amber-600" />
-                              Refer back for changes
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              disabled={p.isDefault}
-                              onClick={() => setDefaultProduct.mutate(p.id)}
-                            >
-                              <Star className="mr-2 h-4 w-4 text-violet-600" />
-                              Set as default
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {p.serviceSubcategory?.code ? (
+                            <code className="rounded bg-slate-100 px-2 py-1 font-mono text-xs uppercase text-slate-600">
+                              {p.serviceSubcategory.code}
+                            </code>
+                          ) : (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setViewingCoursesProduct(p)}
+                            className="h-7 px-2 text-xs font-bold text-violet-600 hover:text-violet-700 hover:bg-violet-50 rounded-lg inline-flex items-center gap-1"
+                          >
+                            <BookOpen className="h-3.5 w-3.5" />
+                            <span>{count}</span>
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`rounded-full px-2 py-0.5 text-[0.625rem] font-bold ${PRODUCT_REVIEW_STYLES[p.reviewStatus] ?? "bg-slate-100 text-slate-600"}`}>
+                            {p.reviewStatus}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-slate-500">{p.passCriteria}%</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={actingId === p.id}
+                              >
+                                {actingId === p.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52 rounded-xl">
+                              <DropdownMenuItem onClick={() => setViewingCoursesProduct(p)}>
+                                <BookOpen className="mr-2 h-4 w-4 text-violet-600" />
+                                View courses ({count})
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setEditingProduct(p)}>
+                                <Pencil className="mr-2 h-4 w-4 text-slate-600" />
+                                Edit product
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+
+                              <DropdownMenuItem
+                                disabled={p.reviewStatus !== "SUBMITTED"}
+                                onClick={() => approveProduct.mutate(p.id)}
+                              >
+                                <Check className="mr-2 h-4 w-4 text-emerald-600" />
+                                Approve product
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={p.reviewStatus !== "SUBMITTED"}
+                                onClick={() => setReferringProduct(p)}
+                              >
+                                <CornerUpLeft className="mr-2 h-4 w-4 text-amber-600" />
+                                Refer back for changes
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                disabled={p.isDefault}
+                                onClick={() => setDefaultProduct.mutate(p.id)}
+                              >
+                                <Star className="mr-2 h-4 w-4 text-violet-600" />
+                                Set as default
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                onClick={() => setDeletingProduct(p)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete product
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -354,6 +416,42 @@ function CategoryProductsRow({ categoryId }: { categoryId: number }) {
             </div>
           )}
         </div>
+
+        <ProductFormDialog
+          open={isCreateOpen || !!editingProduct}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsCreateOpen(false);
+              setEditingProduct(null);
+            }
+          }}
+          product={editingProduct}
+          defaultProductCategoryId={categoryId}
+          onSuccess={() => refetch()}
+        />
+
+        <ProductDeleteDialog
+          product={deletingProduct}
+          onOpenChange={(open) => {
+            if (!open) setDeletingProduct(null);
+          }}
+          onSuccess={() => refetch()}
+        />
+
+        <ProductReferDialog
+          product={referringProduct}
+          onOpenChange={(open) => {
+            if (!open) setReferringProduct(null);
+          }}
+          onSuccess={() => refetch()}
+        />
+
+        <ProductCoursesDialog
+          product={viewingCoursesProduct}
+          onOpenChange={(open) => {
+            if (!open) setViewingCoursesProduct(null);
+          }}
+        />
       </TableCell>
     </TableRow>
   );

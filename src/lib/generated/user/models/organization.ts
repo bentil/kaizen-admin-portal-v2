@@ -15,6 +15,8 @@ export interface Organization {
   modifiedAt: string | null;
   createdAt: string;
   /** @nullable */
+  referralCode: string | null;
+  /** @nullable */
   statusLastModifiedAt: string | null;
   /** @nullable */
   lastSuccessfullyBilledAt: string | null;

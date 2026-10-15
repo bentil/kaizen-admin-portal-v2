@@ -10,4 +10,5 @@ export interface ReferralInviteDto {
   emailAddresses: string[];
   referralCode: string;
   confirmationUrl: string;
+  reciepientRole?: string;
 }

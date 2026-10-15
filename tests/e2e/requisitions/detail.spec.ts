@@ -3,7 +3,7 @@ import { USER_AUTH, waitForListReady } from "../helpers";
 
 test.use({ storageState: USER_AUTH });
 
-async function goToFirstKaizen Admin(page: import("@playwright/test").Page) {
+async function goToFirstRequisition(page: import("@playwright/test").Page) {
   await page.goto("/requisitions");
   const cards = page.locator(
     'a[href^="/requisitions/"]:not([href="/requisitions"]):not([href="/requisitions/new"])',
@@ -19,14 +19,14 @@ async function goToFirstKaizen Admin(page: import("@playwright/test").Page) {
 
 test.describe("Kaizen Admin detail — critical", () => {
   test("REQDETAIL-01 — detail page loads with title", async ({ page }) => {
-    await goToFirstKaizen Admin(page);
+    await goToFirstRequisition(page);
     await expect(page.getByRole("heading").first()).toBeVisible({
       timeout: 15_000,
     });
   });
 
   test("REQDETAIL-10 — tabs render on detail page", async ({ page }) => {
-    await goToFirstKaizen Admin(page);
+    await goToFirstRequisition(page);
     // Tabs have 6 triggers (overview/items/docs/quotes/history/discussion).
     // Labels are hidden under `sm`, so target by count, not by name.
     const tabs = page.getByRole("tab");
@@ -37,7 +37,7 @@ test.describe("Kaizen Admin detail — critical", () => {
   test("REQDETAIL-19/20 — Edit button visibility is permission-gated", async ({
     page,
   }) => {
-    await goToFirstKaizen Admin(page);
+    await goToFirstRequisition(page);
     const edit = page.getByRole("link", { name: /edit requisition|^edit$/i });
     // Either visible (we own it + draft status) or hidden — both valid per
     // canEdit rules. We just assert the page didn't crash.
@@ -62,7 +62,7 @@ test.describe("Kaizen Admin detail — critical", () => {
       }
     });
 
-    await goToFirstKaizen Admin(page);
+    await goToFirstRequisition(page);
 
     // Click Docs tab to be explicit (index 2 in the 6-tab list).
     const tabs = page.getByRole("tab");

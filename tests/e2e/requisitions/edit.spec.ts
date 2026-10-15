@@ -3,7 +3,7 @@ import { USER_AUTH, waitForListReady } from "../helpers";
 
 test.use({ storageState: USER_AUTH });
 
-async function goToFirstKaizen AdminEdit(page: import("@playwright/test").Page) {
+async function goToFirstRequisitionEdit(page: import("@playwright/test").Page) {
   await page.goto("/requisitions");
   const cards = page.locator(
     'a[href^="/requisitions/"]:not([href="/requisitions"]):not([href="/requisitions/new"])',
@@ -48,7 +48,7 @@ async function goToFirstKaizen AdminEdit(page: import("@playwright/test").Page) 
 
 test.describe("Edit requisition — critical", () => {
   test("REQEDIT-01 — edit page loads with pre-filled form", async ({ page }) => {
-    await goToFirstKaizen AdminEdit(page);
+    await goToFirstRequisitionEdit(page);
     await expect(
       page.getByRole("heading", { name: /edit requisition/i }),
     ).toBeVisible({ timeout: 15_000 });
@@ -62,7 +62,7 @@ test.describe("Edit requisition — critical", () => {
   test("REQEDIT-12 — Save sequence: PUT fires on Save Changes click", async ({
     page,
   }) => {
-    await goToFirstKaizen AdminEdit(page);
+    await goToFirstRequisitionEdit(page);
     const save = page.getByRole("button", { name: /save changes/i });
     await expect(save).toBeVisible({ timeout: 15_000 });
 

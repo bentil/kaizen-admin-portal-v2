@@ -18,6 +18,7 @@ export interface QueryUserDto {
   isOwner?: boolean;
   'createdAt.gte'?: string;
   'createdAt.lte'?: string;
+  excludeDeleted?: boolean;
   page?: number;
   limit?: number;
   orderBy?: UserOrderBy;
