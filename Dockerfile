@@ -12,8 +12,10 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Generate API (Orval)
-RUN npm run generate:api
+# The Orval-generated API clients (src/lib/generated) are committed, so the
+# build uses them as-is, like the Vercel build. Regenerating here fetched the
+# swagger specs from sandbox, tying every image build to sandbox being up.
+# Run `npm run generate:api` locally and commit the result to update them.
 
 # Build the Next.js
 RUN npm run build
