@@ -1,5 +1,5 @@
 /**
- * Permission namespace and kaizenAdmin status constants.
+ * Permission namespace constants.
  *
  * Permissions follow a `<resource>:<action>` shape. Wildcards granted by
  * the backend:
@@ -14,31 +14,6 @@
  */
 
 export const PERMISSION = {
-    // KaizenAdmins
-    REQUISITIONS_READ: "kaizenAdmins:read",
-    REQUISITIONS_WRITE: "kaizenAdmins:write",
-    REQUISITIONS_DELETE: "kaizenAdmins:delete",
-    REQUISITIONS_SUBMIT: "kaizenAdmins:submit",
-    REQUISITIONS_APPROVE: "kaizenAdmins:approve",
-    REQUISITIONS_REJECT: "kaizenAdmins:reject",
-
-    // Budgets
-    BUDGETS_READ: "budgets:read",
-    BUDGETS_WRITE: "budgets:write",
-    BUDGETS_DELETE: "budgets:delete",
-    BUDGETS_APPROVE: "budgets:approve",
-
-    // Vendors
-    VENDORS_READ: "vendors:read",
-    VENDORS_WRITE: "vendors:write",
-    VENDORS_DELETE: "vendors:delete",
-    VENDORS_APPROVE: "vendors:approve",
-
-    // Committees
-    COMMITTEES_READ: "committees:read",
-    COMMITTEES_WRITE: "committees:write",
-    COMMITTEES_VOTE: "committees:vote",
-
     // Configuration
     CONFIGURATION_READ: "configuration:read",
     CONFIGURATION_WRITE: "configuration:write",
@@ -69,34 +44,3 @@ export const PERMISSION = {
 export type Permission = (typeof PERMISSION)[keyof typeof PERMISSION];
 
 export const SUPER_WILDCARD_PERMISSION = "admin:*" as const;
-
-/**
- * KaizenAdmin workflow statuses. Values match the generated
- * `KaizenAdminStatus` enum (lowercase, snake_case). Kept in this module
- * because most status checks appear alongside permission checks in the
- * same helpers.
- */
-export const REQUISITION_STATUS = {
-    draft: "draft",
-    submitted: "submitted",
-    budget_validation: "budget_validation",
-    pre_committee_approval: "pre_committee_approval",
-    committee_review: "committee_review",
-    post_committee_approval: "post_committee_approval",
-    approved: "approved",
-    rejected: "rejected",
-    returned_for_modification: "returned_for_modification",
-    cancelled: "cancelled",
-} as const;
-
-export type KaizenAdminStatusValue =
-    (typeof REQUISITION_STATUS)[keyof typeof REQUISITION_STATUS];
-
-/**
- * Terminal states — no further action can be taken.
- */
-export const TERMINAL_STATUSES: readonly KaizenAdminStatusValue[] = [
-    REQUISITION_STATUS.approved,
-    REQUISITION_STATUS.rejected,
-    REQUISITION_STATUS.cancelled,
-];

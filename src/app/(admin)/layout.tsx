@@ -41,7 +41,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-  Bell,
   Search,
   Users,
   Building2,
@@ -219,12 +218,6 @@ export default function AdminLayout({ children }: AdminShellProps) {
           href: "/admin/roles",
           isActive: pathname?.startsWith("/admin/roles"),
         },
-        {
-          label: "Notifications & Announcements",
-          icon: Bell,
-          href: "/admin/notifications",
-          isActive: pathname?.startsWith("/admin/notifications"),
-        },
       ],
     },
     {
@@ -314,11 +307,6 @@ export default function AdminLayout({ children }: AdminShellProps) {
           </div>
 
           <div className="flex items-center gap-4 ml-auto">
-            <Link href="/admin/notifications" className="relative size-10 flex items-center justify-center rounded-xl hover:bg-slate-50 text-slate-400 transition-colors">
-              <Bell className="size-5" strokeWidth={1.5} />
-              <span className="absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border-2 border-white" />
-            </Link>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl hover:bg-slate-50 transition-all group">

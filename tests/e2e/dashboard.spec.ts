@@ -14,20 +14,6 @@ test.describe("Dashboard home + shell — critical", () => {
     await expect(page).toHaveURL(/\/admin/);
   });
 
-  test("SIDEBAR-03 — clicking Kaizen Admins nav routes to /requisitions", async ({
-    page,
-  }, testInfo) => {
-    // On mobile, the sidebar is a drawer — open it via the trigger first.
-    if (testInfo.project.name === "chromium-mobile") {
-      await page.getByRole("button", { name: /toggle sidebar|menu/i }).first().click();
-    }
-    await page
-      .getByRole("link", { name: /requisitions|my requisitions/i })
-      .first()
-      .click();
-    await expect(page).toHaveURL(/\/requisitions/);
-  });
-
   test("USERDROP-05 — Log out routes to /login", async ({ page }, testInfo) => {
     if (testInfo.project.name === "chromium-mobile") {
       await page.getByRole("button", { name: /toggle sidebar|menu/i }).first().click();

@@ -10,16 +10,8 @@
  */
 
 import type { UserDto } from "@/lib/generated/user/models/userDto";
-import type { KaizenAdmin } from "@/lib/generated/kaizenAdmin/models/kaizenAdmin";
 import { ROLE_TAB_VISIBILITY, type RoleCode, type TabKey } from "./roles";
-import {
-    PERMISSION,
-    REQUISITION_STATUS,
-    SUPER_WILDCARD_PERMISSION,
-    TERMINAL_STATUSES,
-    type Permission,
-    type KaizenAdminStatusValue,
-} from "./permissions";
+import { SUPER_WILDCARD_PERMISSION, type Permission } from "./permissions";
 
 /**
  * The generated `OrganizationDto.type` is `{ [k: string]: unknown }`,
@@ -95,86 +87,4 @@ export function canAccessTab(user: Nullable<UserDto>, tab: TabKey): boolean {
     const role = getRoleCode(user);
     if (!role) return false;
     return ROLE_TAB_VISIBILITY[role]?.includes(tab) ?? false;
-}
-
-// --- KaizenAdmin predicates ---------------------------------------------
-
-type KaizenAdminLike = Pick<KaizenAdmin, "status" | "requester_id">;
-
-function statusOf(
-    req: Nullable<Pick<KaizenAdmin, "status">>,
-): KaizenAdminStatusValue | undefined {
-    return req?.status as KaizenAdminStatusValue | undefined;
-}
-
-export function isDraft(req: Nullable<Pick<KaizenAdmin, "status">>): boolean {
-    return statusOf(req) === REQUISITION_STATUS.draft;
-}
-
-export function isReturnedForModification(
-    req: Nullable<Pick<KaizenAdmin, "status">>,
-): boolean {
-    return statusOf(req) === REQUISITION_STATUS.returned_for_modification;
-}
-
-export function isTerminal(req: Nullable<Pick<KaizenAdmin, "status">>): boolean {
-    const s = statusOf(req);
-    return s !== undefined && TERMINAL_STATUSES.includes(s);
-}
-
-export function isRequester(
-    user: Nullable<UserDto>,
-    req: Nullable<Pick<KaizenAdmin, "requester_id">>,
-): boolean {
-    if (!user?.id || !req?.requester_id) return false;
-    return user.id === req.requester_id;
-}
-
-/**
- * Requester can edit drafts and kaizenAdmins returned for modification.
- * Permission isn't additionally required — owning the record is enough
- * because non-draft, non-returned states don't accept edits at all.
- */
-export function canEdit(
-    user: Nullable<UserDto>,
-    req: Nullable<KaizenAdminLike>,
-): boolean {
-    if (!req) return false;
-    return (isDraft(req) || isReturnedForModification(req)) && isRequester(user, req);
-}
-
-export function canSubmit(
-    user: Nullable<UserDto>,
-    req: Nullable<KaizenAdminLike>,
-): boolean {
-    return canEdit(user, req) && hasPermission(user, PERMISSION.REQUISITIONS_SUBMIT);
-}
-
-/**
- * Cancel is broader than edit — available on every non-terminal status.
- * Either the requester (always) or a user with `kaizenAdmins:write`
- * (e.g. admin intervention on someone else's kaizenAdmin).
- */
-export function canCancel(
-    user: Nullable<UserDto>,
-    req: Nullable<KaizenAdminLike>,
-): boolean {
-    if (!req || isTerminal(req)) return false;
-    return isRequester(user, req) || hasPermission(user, PERMISSION.REQUISITIONS_WRITE);
-}
-
-export function canApprove(
-    user: Nullable<UserDto>,
-    req: Nullable<Pick<KaizenAdmin, "status">>,
-): boolean {
-    if (!req || isTerminal(req) || isDraft(req)) return false;
-    return hasPermission(user, PERMISSION.REQUISITIONS_APPROVE);
-}
-
-export function canReject(
-    user: Nullable<UserDto>,
-    req: Nullable<Pick<KaizenAdmin, "status">>,
-): boolean {
-    if (!req || isTerminal(req) || isDraft(req)) return false;
-    return hasPermission(user, PERMISSION.REQUISITIONS_REJECT);
 }

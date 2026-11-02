@@ -11,7 +11,6 @@ const API_BASE_URL = (
 
 // API Configuration - matching Flutter app structure
 export const API_CONFIG = {
-    kaizenAdminBaseUrl: `${API_BASE_URL}/kaizenAdmin`,
     orgBaseUrl: `${API_BASE_URL}/org`,
     userBaseUrl: `${API_BASE_URL}/user`,
     billingBaseUrl: `${API_BASE_URL}/billing`,
@@ -86,38 +85,12 @@ apiClient.interceptors.response.use(
     },
 );
 
-// Helper to determine base URL based on endpoint
-export function getBaseUrl(endpoint: string): string {
-    // Organization Service endpoints
-    if (
-        endpoint.includes("/org/") ||
-        endpoint.startsWith("/org") ||
-        endpoint.includes("/organizations") ||
-        endpoint.includes("/organization-types") ||
-        endpoint.includes("/organization-groups") ||
-        endpoint.includes("/organization-configs") ||
-        endpoint.includes("/countries") ||
-        endpoint.includes("/projects")
-    ) {
-        return API_CONFIG.orgBaseUrl;
-    }
-
-    // User Service endpoints
-    if (
-        endpoint.includes("/user/") ||
-        endpoint.startsWith("/user") ||
-        endpoint.includes("/users")
-    ) {
-        return API_CONFIG.userBaseUrl;
-    }
-
-    // Default to KaizenAdmin Service
-    return API_CONFIG.kaizenAdminBaseUrl;
-}
-
-// Helper to make requests with automatic base URL selection
+// Every request names its service: use one of the *Request mutators below.
 export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
-    const baseURL = config.baseURL || getBaseUrl(config.url || "");
+    const baseURL = config.baseURL;
+    if (!baseURL) {
+        throw new Error(`apiRequest: no baseURL for ${config.url ?? "request"}`);
+    }
     const response = await apiClient.request<T>({
         ...config,
         baseURL,
@@ -126,9 +99,6 @@ export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
 }
 
 // Service-specific mutators for Orval (Cleaner approach)
-export const kaizenAdminRequest = <T>(config: AxiosRequestConfig): Promise<T> =>
-    apiRequest({ ...config, baseURL: API_CONFIG.kaizenAdminBaseUrl });
-
 export const orgRequest = <T>(config: AxiosRequestConfig): Promise<T> =>
     apiRequest({ ...config, baseURL: API_CONFIG.orgBaseUrl });
 
