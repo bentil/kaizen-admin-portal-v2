@@ -3,14 +3,20 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 import { tokenStorage } from "./auth/token-storage";
 import { handleTokenExpiry, shouldRefreshToken } from "./auth/token-refresh";
 
+// API gateway origin, baked in at build time (e.g. https://api.kaizen-aceit.com).
+// Each service is a path prefix on it. Defaults to sandbox when unset.
+const API_BASE_URL = (
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.sandbox.kaizen-aceit.com"
+).replace(/\/+$/, "");
+
 // API Configuration - matching Flutter app structure
 export const API_CONFIG = {
-    kaizenAdminBaseUrl: "https://api.sandbox.kaizen-aceit.com/kaizenAdmin",
-    orgBaseUrl: "https://api.sandbox.kaizen-aceit.com/org",
-    userBaseUrl: "https://api.sandbox.kaizen-aceit.com/user",
-    billingBaseUrl: "https://api.sandbox.kaizen-aceit.com/billing",
-    paymentBaseUrl: "https://api.sandbox.kaizen-aceit.com/payment",
-    contentBaseUrl: "https://api.sandbox.kaizen-aceit.com/content",
+    kaizenAdminBaseUrl: `${API_BASE_URL}/kaizenAdmin`,
+    orgBaseUrl: `${API_BASE_URL}/org`,
+    userBaseUrl: `${API_BASE_URL}/user`,
+    billingBaseUrl: `${API_BASE_URL}/billing`,
+    paymentBaseUrl: `${API_BASE_URL}/payment`,
+    contentBaseUrl: `${API_BASE_URL}/content`,
     apiPrefix: "/api/v1",
 } as const;
 
