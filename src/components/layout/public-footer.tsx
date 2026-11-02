@@ -63,7 +63,6 @@ export function PublicFooter() {
           <div className="w-full pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 text-sm font-medium">
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-white/80">
               {/* <Link href="/about" className="hover:text-white transition-all underline-offset-4 hover:underline">About</Link> */}
-              <Link href="/pricing" className="hover:text-white transition-all underline-offset-4 hover:underline">Pricing</Link>
               <Link href="/contact" className="hover:text-white transition-all underline-offset-4 hover:underline">Support</Link>
               <Link href="/privacy" className="hover:text-white transition-all underline-offset-4 hover:underline">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-all underline-offset-4 hover:underline">Terms</Link>

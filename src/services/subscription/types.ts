@@ -84,7 +84,6 @@ export const EXEMPT_ORG_TYPES = ["PLATFORM_ADMIN"] as const;
 
 // Routes exempt from subscription wall
 export const EXEMPT_ROUTES = [
-    "/pricing",
     "/subscription",
     "/settings/billing",
     "/settings/subscription",
