@@ -19,8 +19,6 @@ export interface PricingCardsProps {
     showBillingToggle?: boolean;
     /** Show FAQ section */
     showFaq?: boolean;
-    /** Show feature comparison table */
-    showComparison?: boolean;
     /** Variant style: "default" for subscription wall, "marketing" for public page */
     variant?: "default" | "marketing";
     /** Pre-selected billing cycle */
@@ -46,7 +44,6 @@ export function PricingCards({
     onCheckoutSuccess,
     showBillingToggle = false,
     showFaq = false,
-    showComparison = false,
     variant = "default",
     defaultBillingCycle = "monthly",
 }: PricingCardsProps) {
@@ -366,44 +363,6 @@ export function PricingCards({
                     })
                 )}
             </div>
-
-            {/* Feature Comparison */}
-            {showComparison && (
-                <div className="mt-16 max-w-5xl mx-auto">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Feature Comparison</h2>
-                    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-slate-100">
-                                    <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">Feature</th>
-                                    <th className="px-6 py-4 text-sm font-bold text-slate-900">Starter</th>
-                                    <th className="px-6 py-4 text-sm font-bold text-indigo-600 bg-indigo-50/30">Professional</th>
-                                    <th className="px-6 py-4 text-sm font-bold text-slate-900">Enterprise</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {[
-                                    { label: "Team Members", values: ["5 Seats", "25 Seats", "Unlimited"] },
-                                    { label: "Workflow Designer", values: [true, true, true] },
-                                    { label: "Advanced API Access", values: [false, true, true] },
-                                    { label: "SSO & SAML 2.0", values: [false, false, true] },
-                                ].map((row, i) => (
-                                    <tr key={i}>
-                                        <td className="px-6 py-4 text-sm text-slate-600">{row.label}</td>
-                                        {row.values.map((val, idx) => (
-                                            <td key={idx} className={`px-6 py-4 text-sm ${idx === 1 ? "bg-indigo-50/30" : ""}`}>
-                                                {typeof val === "boolean" ? (
-                                                    val ? <Check className="h-4 w-4 text-green-500" /> : <span className="text-slate-300">—</span>
-                                                ) : val}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
 
             {/* FAQ */}
             {showFaq && (

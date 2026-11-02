@@ -10,7 +10,6 @@ const ADMIN_ROUTES: Array<{ path: string; id: string }> = [
   { path: "/admin/billing", id: "ADMBILL" },
   { path: "/admin/roles", id: "ADMROLES" },
   { path: "/admin/payment-config", id: "ADMPAY" },
-  { path: "/admin/subscriptions", id: "ADMSUB" },
   { path: "/admin/packages", id: "ADMPKG" },
   { path: "/admin/discounts", id: "ADMDISC" },
   { path: "/admin/offers", id: "ADMOFFERS" },

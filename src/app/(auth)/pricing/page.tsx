@@ -32,7 +32,6 @@ export default function PricingPage() {
                 <PricingCards
                     showBillingToggle={true}
                     showFaq={true}
-                    showComparison={true}
                     variant="marketing"
                 />
 
