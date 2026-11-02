@@ -57,9 +57,6 @@ export function PublicNavbar({ isVisible = true }: PublicNavbarProps) {
           {/* <Link href="/about" className="hover:text-black dark:hover:text-white px-4 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300">
             About
           </Link> */}
-          <Link href="/contact" className="hover:text-black dark:hover:text-white px-4 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300">
-            Support
-          </Link>
         </div>
 
         <div className="flex items-center gap-6 shrink-0">

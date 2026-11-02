@@ -145,7 +145,6 @@ export default function PrivacyPolicyPage() {
                         </p>
                         <ul className="list-none pl-0 text-slate-600 mt-4 space-y-2">
                             <li>By email: privacy@kaizen-aceit.com</li>
-                            <li>By visiting our contact page: <Link href="/contact" className="text-violet-600 hover:text-violet-700">Contact Us</Link></li>
                         </ul>
                     </section>
 
