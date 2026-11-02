@@ -18,7 +18,7 @@ const Logo = () => (
             <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <Image
                 src="/logovar6.svg"
-                alt="KaizenAdmins"
+                alt="Kaizen Admin"
                 width={48}
                 height={48}
                 className="h-10 w-auto relative z-10 group-hover:scale-110 transition-transform duration-500"
@@ -26,7 +26,7 @@ const Logo = () => (
             />
         </div>
         <span className="text-lg font-bold tracking-tight text-slate-900">
-            KaizenAdmins
+            Kaizen Admin
         </span>
     </Link>
 );

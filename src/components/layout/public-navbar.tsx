@@ -37,7 +37,7 @@ export function PublicNavbar({ isVisible = true }: PublicNavbarProps) {
             <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <Image
               src="/logovar6.svg"
-              alt="KaizenAdmin"
+              alt="Kaizen Admin"
               width={56}
               height={56}
               className="h-12 w-auto relative z-10 group-hover:scale-110 transition-transform duration-500"
@@ -45,7 +45,7 @@ export function PublicNavbar({ isVisible = true }: PublicNavbarProps) {
             />
           </div>
           <span className="text-xl font-bold tracking-tight hidden sm:inline text-black dark:text-white">
-            KaizenAdmins
+            Kaizen Admin
           </span>
         </Link>
 

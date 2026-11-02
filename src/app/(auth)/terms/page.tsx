@@ -26,7 +26,7 @@ export default function TermsAndConditionsPage() {
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-slate-900 mb-4">1. Agreement to Terms</h2>
                         <p className="text-slate-600 leading-relaxed">
-                            These Terms and Conditions constitute a legally binding agreement made between you, whether personally or on behalf of an entity, and KaizenAdmin concerning your access to and use of our website and services. You agree that by accessing the Service, you have read, understood, and agreed to be bound by all of these Terms and Conditions.
+                            These Terms and Conditions constitute a legally binding agreement made between you, whether personally or on behalf of an entity, and Kaizen Admin concerning your access to and use of our website and services. You agree that by accessing the Service, you have read, understood, and agreed to be bound by all of these Terms and Conditions.
                         </p>
                     </section>
 
@@ -119,7 +119,7 @@ export default function TermsAndConditionsPage() {
                             If you have any questions about these Terms, please contact us:
                         </p>
                         <ul className="list-none pl-0 text-slate-600 mt-4 space-y-2">
-                            <li>By email: legal@kaizenAdminmanager.com</li>
+                            <li>By email: legal@kaizen-aceit.com</li>
                             <li>By visiting our contact page: <Link href="/contact" className="text-violet-600 hover:text-violet-700">Contact Us</Link></li>
                         </ul>
                     </section>

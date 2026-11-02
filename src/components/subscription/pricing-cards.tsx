@@ -40,10 +40,6 @@ const faqs = [
         question: "Is there a free trial?",
         answer: "Yes! All plans come with a 14-day free trial. No credit card required to start.",
     },
-    {
-        question: "What happens when I exceed my kaizenAdmin limit?",
-        answer: "We'll notify you when you're approaching your limit. You can upgrade your plan or purchase additional kaizenAdmins as needed.",
-    },
 ];
 
 export function PricingCards({
@@ -388,7 +384,6 @@ export function PricingCards({
                             <tbody className="divide-y divide-slate-50">
                                 {[
                                     { label: "Team Members", values: ["5 Seats", "25 Seats", "Unlimited"] },
-                                    { label: "Monthly KaizenAdmins", values: ["100", "1,000", "Unlimited"] },
                                     { label: "Workflow Designer", values: [true, true, true] },
                                     { label: "Advanced API Access", values: [false, true, true] },
                                     { label: "SSO & SAML 2.0", values: [false, false, true] },

@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
                     <section className="mb-8">
                         <h2 className="text-xl font-semibold text-slate-900 mb-4">1. Introduction</h2>
                         <p className="text-slate-600 leading-relaxed">
-                            Welcome to KaizenAdmin. We respect your privacy and are committed to protecting your personal data.
+                            Welcome to Kaizen Admin. We respect your privacy and are committed to protecting your personal data.
                             This privacy policy will inform you about how we look after your personal data when you visit our website
                             and use our services, and tell you about your privacy rights and how the law protects you.
                         </p>
@@ -144,7 +144,7 @@ export default function PrivacyPolicyPage() {
                             If you have any questions about this Privacy Policy, please contact us:
                         </p>
                         <ul className="list-none pl-0 text-slate-600 mt-4 space-y-2">
-                            <li>By email: privacy@kaizenAdminmanager.com</li>
+                            <li>By email: privacy@kaizen-aceit.com</li>
                             <li>By visiting our contact page: <Link href="/contact" className="text-violet-600 hover:text-violet-700">Contact Us</Link></li>
                         </ul>
                     </section>

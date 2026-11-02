@@ -72,7 +72,7 @@ function OTPConfirmationContent() {
             <Link href="/" className="inline-flex items-center justify-center mb-6">
               <Image
                 src="/kaizen-logo.svg"
-                alt="KaizenAdmin"
+                alt="Kaizen Admin"
                 width={48}
                 height={48}
                 className="h-12 w-auto"
@@ -103,7 +103,7 @@ function OTPConfirmationContent() {
             <Link href="/" className="inline-flex items-center justify-center mb-6">
               <Image
                 src="/kaizen-logo.svg"
-                alt="KaizenAdmin"
+                alt="Kaizen Admin"
                 width={48}
                 height={48}
                 className="h-12 w-auto"

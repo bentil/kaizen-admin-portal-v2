@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="text-slate-500">Welcome to the KaizenAdmin Admin Portal</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="text-slate-500">Welcome to the Kaizen Admin Portal</p></div>
         <div className="flex items-center gap-2 text-sm text-slate-500"><Calendar className="h-4 w-4" />{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

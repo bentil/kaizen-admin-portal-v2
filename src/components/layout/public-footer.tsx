@@ -16,7 +16,7 @@ export function PublicFooter() {
             <div className="bg-white p-2 rounded-xl inline-block shadow-lg">
               <Image
                 src="/logovar6.svg"
-                alt="KaizenAdmin"
+                alt="Kaizen Admin"
                 width={32}
                 height={32}
                 className="h-8 w-auto"
@@ -25,7 +25,7 @@ export function PublicFooter() {
           </Link>
 
           {/* Tagline */}
-          <h3 className="text-xl font-bold mb-4">KaizenAdmin</h3>
+          <h3 className="text-xl font-bold mb-4">Kaizen Admin</h3>
           <p className="text-white/70 text-sm max-w-md mb-12">
             The intelligent procurement platform for modern businesses.
             Simplify tracking, approvals, and vendor management.
@@ -83,7 +83,7 @@ export function PublicFooter() {
           </div>
 
           <div className="mt-12 text-white/30 text-xs">
-            © {currentYear} KaizenAdmin. All rights reserved.
+            © {currentYear} Kaizen Admin. All rights reserved.
           </div>
         </div>
       </div>

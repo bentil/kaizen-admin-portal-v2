@@ -27,9 +27,9 @@ const mockSubscriptions = [
 ];
 
 const planDetails = {
-  Starter: { price: 29, color: "bg-slate-500", features: ["5 users", "100 kaizenAdmins/mo", "Basic approvals"] },
-  Professional: { price: 79, color: "bg-violet-500", features: ["25 users", "1000 kaizenAdmins/mo", "API access"] },
-  Enterprise: { price: 199, color: "bg-amber-500", features: ["Unlimited users", "Unlimited kaizenAdmins", "SSO", "24/7 support"] },
+  Starter: { price: 29, color: "bg-slate-500", features: ["5 users", "Basic approvals"] },
+  Professional: { price: 79, color: "bg-violet-500", features: ["25 users", "API access"] },
+  Enterprise: { price: 199, color: "bg-amber-500", features: ["Unlimited users", "SSO", "24/7 support"] },
 };
 
 export default function AdminSubscriptionsPage() {
