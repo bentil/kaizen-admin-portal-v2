@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useGetUsers, useGetCountReport, useAggregateActiveUsersByDate } from "@/lib/generated/user/users/users";
 import { useGetOrganizations } from "@/lib/generated/org/organizations/organizations";
 import { useGetOrganizationRoles } from "@/lib/generated/user/organization-roles/organization-roles";
-import { Users, Building2, Shield, TrendingUp, Calendar, ArrowUpRight, Activity } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { usePendingDeadLetterCount } from "@/hooks/use-pending-dead-letter-count";
+import { Users, Building2, Shield, TrendingUp, Calendar, ArrowUpRight, Activity, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 
 const StatCard = ({ title, value, icon, href, gradient }: { title: string; value: string | number; icon: React.ReactNode; href?: string; gradient?: string }) => (
@@ -49,9 +51,23 @@ export default function AdminDashboardPage() {
   const recentUsers = Array.isArray(usersData?.data) ? usersData.data.slice(0, 5) : [];
   const recentOrgs = Array.isArray(orgsData?.data) ? orgsData.data.slice(0, 5) : [];
   const isLoading = usersLoading || orgsLoading || rolesLoading;
+  const { isAuthenticated } = useAuth();
+  const pendingFailedMessages = usePendingDeadLetterCount(isAuthenticated);
 
   return (
     <div className="space-y-6">
+      {pendingFailedMessages > 0 && (
+        <Link
+          href="/admin/dead-letters"
+          className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 transition-colors hover:bg-amber-100"
+        >
+          <TriangleAlert className="h-5 w-5 shrink-0 text-amber-600" />
+          <span className="text-sm font-medium">
+            {pendingFailedMessages} failed message{pendingFailedMessages === 1 ? "" : "s"} waiting to be reviewed
+          </span>
+          <span className="ml-auto flex items-center gap-1 text-sm font-bold">Review <ArrowUpRight className="h-4 w-4" /></span>
+        </Link>
+      )}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="text-slate-500">Welcome to the KaizenAdmin Admin Portal</p></div>
         <div className="flex items-center gap-2 text-sm text-slate-500"><Calendar className="h-4 w-4" />{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useGetSelf } from "@/lib/generated/user/users/users";
+import { usePendingDeadLetterCount } from "@/hooks/use-pending-dead-letter-count";
 import { cn } from "@/lib/utils";
 import { ProfilePicture } from "@/components/ui/profile-picture";
 
@@ -63,6 +64,7 @@ import {
   LayoutGrid,
   UserPlus,
   ClipboardList,
+  TriangleAlert,
 } from "lucide-react";
 
 type NavItem = {
@@ -70,6 +72,8 @@ type NavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   href: string;
   isActive?: boolean;
+  /** Shown as a count next to the label when greater than zero */
+  badge?: number;
   children?: NavItem[];
 };
 
@@ -98,6 +102,14 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
           <Link href={item.href} className="flex items-center gap-3">
             <Icon className={cn("size-5", isActive ? "text-sidebar-accent-foreground" : "text-slate-400")} strokeWidth={1.5} />
             <span className="text-[15px]">{item.label}</span>
+            {item.badge ? (
+              <span
+                aria-label={`${item.badge} pending`}
+                className="ml-auto min-w-6 rounded-full bg-amber-100 px-2 py-0.5 text-center text-xs font-bold text-amber-700"
+              >
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            ) : null}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -148,6 +160,7 @@ export default function AdminLayout({ children }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = React.useState(false);
+  const pendingFailedMessages = usePendingDeadLetterCount(isAuthenticated);
 
   React.useEffect(() => {
     setMounted(true);
@@ -205,6 +218,19 @@ export default function AdminLayout({ children }: AdminShellProps) {
           icon: ClipboardList,
           href: "/admin/reports",
           isActive: pathname?.startsWith("/admin/reports"),
+        },
+      ],
+    },
+    {
+      title: "Operations",
+      defaultOpen: true,
+      items: [
+        {
+          label: "Failed Messages",
+          icon: TriangleAlert,
+          href: "/admin/dead-letters",
+          isActive: pathname?.startsWith("/admin/dead-letters"),
+          badge: pendingFailedMessages,
         },
       ],
     },
